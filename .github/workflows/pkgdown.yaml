@@ -4,6 +4,11 @@ on:
   push:
     branches: [main, master]
   workflow_dispatch:
+    inputs:
+      deploy:
+        description: Publish the site (requires GitHub Pages configuration)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -34,6 +39,7 @@ jobs:
           path: _site
 
   deploy:
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
