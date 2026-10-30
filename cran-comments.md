@@ -1,57 +1,65 @@
 ## Submission
 
-This source package is named fastEmbedR. Its development repository is
-https://github.com/tkcaccia/fastEmbedR-light; the original fastEmbedR
-repository is unchanged by this preparation.
+This is a new submission of fastEmbedR. Development is at
+https://github.com/tkcaccia/fastEmbedR-light. The original fastEmbedR
+repository has not been modified by this work.
 
 The package does not import, link to, load, or require faissR or a FAISS
-installation. CPU exact and HNSW nearest-neighbor searches are implemented
-in the package. Historical source attribution and license copies are retained.
+installation. CPU exact and HNSW searches are package-owned. Historical
+source attribution and license copies are retained.
 
-## Test environments
+## Source archive
 
-- Ubuntu 22.04, x86_64-pc-linux-gnu, R 4.5.2, GCC 11.4.0.
-- CPU-only build; faissR is not installed in the test environment.
-- Separate clean sessions exercise CPU HNSW, UMAP, and t-SNE without either
-  faissR or the optional float package.
+fastEmbedR_0.1.tar.gz is the canonical archive built with R 4.6.2 by GitHub
+Actions from commit 8df0a0801165307fefed242fef3dbc5b4c8fbdc0 on 2026-10-30.
+The same archive is checked on every platform. Its unpacked source was
+compared with the committed package source; no compiled binaries are included.
 
-## R CMD check results
+## Cross-platform checks
 
-Checked on 2026-10-30 with:
+The final archive passed R CMD check --as-cran --no-manual with
+0 errors, 0 warnings, and 0 notes on:
 
-    R CMD check --as-cran fastEmbedR_0.1.tar.gz
+- Ubuntu Linux, R 4.6.2, GCC 13.3.0.
+- Windows, R 4.6.2 ucrt, GCC 14.3.0.
+- macOS Tahoe, aarch64, R 4.6.2, Apple clang 21.0.0.
+- Ubuntu Linux, R-devel 4.7.0 (2026-10-26 r90766).
 
-0 errors | 0 warnings | 2 notes
+Check run:
+https://github.com/tkcaccia/fastEmbedR-light/actions/runs/41063442753
 
-- New submission.
-- The checking environment could not verify the current time. This is an
-  external clock-verification note; no future-dated package files were
-  identified. The clock check was not disabled.
+All source-build and platform-check jobs in this run completed successfully.
+The canonical archive SHA-256 is:
 
-Tests: 2,789 passing assertions, 0 failures, 0 warnings, 97 expected skips.
-Examples, vignette rebuilding, PDF and HTML manuals, compiled-code checks,
-source portability checks, and dependency checks passed.
+    63a9ba1dd78a2d3f0498b3e763c1ed237aadb6c6f0cc15d242437f4e013b3714
 
-The exact source archive and complete local check log are available in the
-project directory as fastEmbedR_0.1.tar.gz and
-output/cran-check/00check.log. Source-style and CUDA configuration regression
-checks also passed.
+Only required CPU tooling is declared in SystemRequirements. Optional GPU
+installation requirements are documented in docs/installation.md, so
+automated CPU dependency installation does not request a CUDA toolkit.
 
-Windows, macOS, and current R-release/R-devel checks remain to be run using
-the repository's R CMD check workflow before submission. The local R version
-is 4.5.2. The workflow includes Linux release/devel, macOS release, and Windows
-release. Publication to fastEmbedR-light was approved on 2026-10-30;
-cross-platform check results will be recorded after those jobs finish.
-No CRAN submission has been made.
+## Additional verification
 
-## Optional acceleration
+An earlier complete local check on Ubuntu 22.04, R 4.5.2, passed with
+0 errors, 0 warnings, and 2 notes: new submission and inability to verify the
+system clock. It had 2,789 passing assertions and no test failures or warnings.
+The subsequent metadata and portability fixes passed their focused local
+tests and the release-R checks above.
 
-Apple Metal and CUDA/cuVS support are optional. Unavailable backend requests
-fail explicitly. No GPU hardware is available in the local test environment,
-so hardware-specific tests are skipped. The CPU build requires only a C++17
-compiler and the declared R dependencies.
+Separate clean sessions exercised CPU HNSW, UMAP, and t-SNE without either
+faissR or the optional float package. Source-style and CUDA configuration
+regression checks passed. The documentation build also passed.
+
+## Optional acceleration and platform-specific tests
+
+Apple Metal and CUDA/cuVS are optional. Unavailable backend requests fail
+explicitly. The CPU build requires only a C++17 compiler and the declared R
+dependencies. Hardware-specific tests are skipped when no suitable device
+is available.
 
 Tests requiring more than two CPU workers and the long manuscript example
-are skipped on CRAN. Ordinary examples and the remaining tests exercise CPU
-embedding, query search, transforms, graph construction, clustering,
-preprocessing, and file-backed workflows.
+are skipped on CRAN. A Unix external-command test and the preserved-time
+mutation check do not run on Windows. Windows graph modularity uses the
+existing native Windows file mapper; bucketed graph sorting closes readers
+before deleting temporary files.
+
+No CRAN submission has been made.
