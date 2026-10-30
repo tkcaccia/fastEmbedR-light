@@ -52,8 +52,6 @@ massive_graph_modularity <- function(graph, membership,
     if (!identical(backend, "cpu")) stop(
         "Massive modularity requires CPU; no backend fallback was used.",
         call. = FALSE)
-    if (.Platform$OS.type != "unix") stop(
-        "Massive modularity requires POSIX memory mapping.", call. = FALSE)
     if (!inherits(graph, "fastEmbedR_massive_graph") ||
         !identical(graph$storage, "csr") ||
         !identical(graph$weight_method, "umap_fuzzy_union") ||

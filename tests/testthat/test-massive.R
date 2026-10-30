@@ -1926,6 +1926,8 @@ test_that("multi-GPU KNN resumes verified shards and interrupted merges", {
         vapply(results, `[[`, "", "indices_path"),
         paths[["indices"]], vapply(tasks, `[[`, 0, "bytes"), TRUE),
         "differs from its shards")
+    # Windows cannot round-trip submillisecond times via Sys.setFileTime().
+    if (.Platform$OS.type == "windows") return(invisible(NULL))
     shard <- results[[1L]]$indices_path
     modified <- file.info(shard)$mtime
     Sys.sleep(1.1)
