@@ -148,7 +148,7 @@ finish_knn_graph <- function(graph, input, selected, settings, started) {
 #' communities in large networks. J Stat Mech. 2008;2008:P10008.
 #' @examples
 #' x <- scale(as.matrix(iris[, 1:4]))
-#' graph <- knn_graph(x, k = 15, weight = "snn")
+#' graph <- knn_graph(x, k = 15, weight = "snn", n.cores = 1)
 #' graph
 #' @export
 knn_graph <- function(x,
@@ -346,7 +346,7 @@ finish_graph_cluster <- function(result, graph, settings, started) {
 #' Genome Biol. 2019;20:59. doi:10.1186/s13059-019-1663-x.
 #' @examples
 #' x <- scale(as.matrix(iris[, 1:4]))
-#' graph <- knn_graph(x, k = 15)
+#' graph <- knn_graph(x, k = 15, n.cores = 1)
 #' clusters <- graph_cluster(graph, method = "leiden", seed = 1)
 #' table(clusters$membership)
 #' @export

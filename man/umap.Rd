@@ -188,6 +188,6 @@ can be supplied in the same original feature space.
 }
 \examples{
 x <- scale(as.matrix(iris[, 1:4]))
-fit <- umap(x, n_neighbors = 15, seed = 1)
+fit <- umap(x, n_neighbors = 15, seed = 1, n.cores = 1)
 plot(fit)
 }

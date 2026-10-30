@@ -70,7 +70,7 @@
 #'   which can be passed to [project_landmark_model()] for new observations.
 #' @examples
 #' x <- scale(as.matrix(iris[, 1:4]))
-#' fit <- umap(x, n_neighbors = 15, seed = 1)
+#' fit <- umap(x, n_neighbors = 15, seed = 1, n.cores = 1)
 #' plot(fit)
 #' @name umap
 NULL

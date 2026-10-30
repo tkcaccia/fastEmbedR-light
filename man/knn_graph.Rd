@@ -49,7 +49,7 @@ it does not expose a second nearest-neighbor tuning API.
 }
 \examples{
 x <- scale(as.matrix(iris[, 1:4]))
-graph <- knn_graph(x, k = 15, weight = "snn")
+graph <- knn_graph(x, k = 15, weight = "snn", n.cores = 1)
 graph
 }
 \references{

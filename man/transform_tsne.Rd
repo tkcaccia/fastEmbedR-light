@@ -110,6 +110,6 @@ query_knn <- list(
 query_layout <- transform_tsne(
     reference,
     knn = query_knn, perplexity = 0.5,
-    n_iter = 2, exact_repulsion_threshold = 10, seed = 1
+    n_iter = 2, exact_repulsion_threshold = 10, seed = 1, n.cores = 1
 )
 }

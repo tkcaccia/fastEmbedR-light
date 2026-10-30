@@ -217,8 +217,10 @@ fast_knn_opentsne_core <- function(
 #'     nrow = nrow(d), byrow = TRUE
 #' )
 #' prep <- prepare_tsne_knn(idx, dst, perplexity = 5)
-#' y1 <- tsne_knn(prep, seed = 1, early_exaggeration_iter = 5, n_iter = 10)
-#' y2 <- tsne_knn(prep, seed = 2, early_exaggeration_iter = 5, n_iter = 10)
+#' y1 <- tsne_knn(prep, seed = 1, n.cores = 1,
+#'     early_exaggeration_iter = 5, n_iter = 10)
+#' y2 <- tsne_knn(prep, seed = 2, n.cores = 1,
+#'     early_exaggeration_iter = 5, n_iter = 10)
 #' @export
 prepare_tsne_knn <- function(indices,
                                 distances = NULL,

@@ -347,8 +347,8 @@ run_precompute_knn <- function(x, k, metric, policy, n_threads,
 #'   and own device-resident index and distance buffers.
 #' @examples
 #' x <- scale(as.matrix(iris[, 1:4]))
-#' knn <- precompute_knn(x, k = 15, backend = "cpu", n.cores = 2)
-#' layout <- umap_knn(knn, backend = "cpu", seed = 1)
+#' knn <- precompute_knn(x, k = 15, backend = "cpu", n.cores = 1)
+#' layout <- umap_knn(knn, backend = "cpu", seed = 1, n.cores = 1)
 #' @export
 precompute_knn <- function(data,
                             k = 30L,
@@ -451,7 +451,7 @@ run_precompute_query_knn <- function(reference, query, k, metric,
 #' x <- scale(as.matrix(iris[, 1:4]))
 #' ref <- x[1:100, , drop = FALSE]
 #' qry <- x[101:150, , drop = FALSE]
-#' knn <- precompute_query_knn(ref, qry, k = 10, backend = "cpu")
+#' knn <- precompute_query_knn(ref, qry, k = 10, backend = "cpu", n.cores = 1)
 #' @export
 precompute_query_knn <- function(reference,
                                     query,

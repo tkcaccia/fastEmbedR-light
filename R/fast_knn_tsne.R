@@ -54,7 +54,7 @@
 #'     nrow = nrow(d), byrow = TRUE
 #' )
 #' layout <- tsne_knn(idx, dst,
-#'     init_data = x, perplexity = 5,
+#'     init_data = x, perplexity = 5, n.cores = 1,
 #'     early_exaggeration_iter = 5, n_iter = 10
 #' )
 #' @name tsne_knn
@@ -793,7 +793,7 @@ tsne_landmark_controls <- function(landmarks, transform_k,
 #' @examples
 #' fit <- tsne(
 #'     as.matrix(iris[, 1:4]),
-#'     perplexity = 5,
+#'     perplexity = 5, n.cores = 1,
 #'     early_exaggeration_iter = 5, n_iter = 10, seed = 1
 #' )
 #' plot(fit, labels = iris$Species)

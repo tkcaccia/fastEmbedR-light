@@ -138,7 +138,7 @@ dst <- matrix(d[cbind(rep(seq_len(nrow(d)), each = k), as.vector(t(idx)))],
     nrow = nrow(d), byrow = TRUE
 )
 layout <- tsne_knn(idx, dst,
-    init_data = x, perplexity = 5,
+    init_data = x, perplexity = 5, n.cores = 1,
     early_exaggeration_iter = 5, n_iter = 10
 )
 }

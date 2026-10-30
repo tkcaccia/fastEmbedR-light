@@ -10,6 +10,16 @@ on:
 permissions:
   contents: read
 
+env:
+  OPENBLAS_NUM_THREADS: 1
+  GOTO_NUM_THREADS: 1
+  MKL_NUM_THREADS: 1
+  BLIS_NUM_THREADS: 1
+  VECLIB_MAXIMUM_THREADS: 1
+  _R_CHECK_EXAMPLE_TIMING_CPU_TO_ELAPSED_THRESHOLD_: 2.5
+  _R_CHECK_TEST_TIMING_CPU_TO_ELAPSED_THRESHOLD_: 2.5
+  _R_CHECK_VIGNETTE_TIMING_CPU_TO_ELAPSED_THRESHOLD_: 2.5
+
 jobs:
   source-package:
     name: Build canonical source package
@@ -30,6 +40,8 @@ jobs:
         run: Rscript tools/check_source_style.R
       - name: Test CUDA configure discovery and strict mode
         run: bash .github/scripts/test-configure-cuda.sh
+      - name: Test resource-budget gate
+        run: Rscript .github/scripts/test-check-budget.R
       - name: Build source package
         run: R CMD build . --compact-vignettes=gs+qpdf
       - name: Archive source package
@@ -91,17 +103,8 @@ jobs:
           if ! command -v checkbashisms >/dev/null; then
             brew install checkbashisms
           fi
-      - name: Check
-        shell: Rscript {0}
+      - name: Check package and enforce test budget
+        shell: bash
         run: |
-          tarballs <- list.files(
-            "source-package",
-            pattern = "[.]tar[.]gz$",
-            full.names = TRUE
-          )
-          stopifnot(length(tarballs) == 1L)
-          rcmdcheck::rcmdcheck(
-            tarballs[[1L]],
-            args = c("--no-manual", "--as-cran"),
-            error_on = "warning"
-          )
+          unset OMP_NUM_THREADS OMP_THREAD_LIMIT OMP_WAIT_POLICY
+          Rscript .github/scripts/check-package.R

@@ -3309,7 +3309,6 @@ test_that("saved PCA and fuzzy graph feed UMAP and Louvain", {
 })
 
 test_that("synchronized CPU UMAP is explicit and worker-invariant", {
-    skip_on_cran()
     root <- tempfile()
     dir.create(root)
     on.exit(unlink(root, recursive = TRUE))
@@ -3333,22 +3332,20 @@ test_that("synchronized CPU UMAP is explicit and worker-invariant", {
         memory_limit = "256MB", cpu_update = "synchronized",
         n.cores = workers)
     one <- fit(1L, "one.f32")
-    four <- fit(4L, "four.f32")
-    many <- fit(32L, "many.f32")
+    two <- fit(2L, "two.f32")
     expected <- massive_read_rows(one, 1L, nrow(x))
-    expect_identical(massive_read_rows(four, 1L, nrow(x)), expected)
-    expect_identical(massive_read_rows(many, 1L, nrow(x)), expected)
+    expect_identical(massive_read_rows(two, 1L, nrow(x)), expected)
     expect_true(all(is.finite(expected)))
-    expect_identical(four$optimizer, "synchronized_cpu_fixed_point")
-    expect_identical(four$resources$effective_cpu_workers, 4L)
-    expect_equal(four$resources$delta_ram_bytes, nrow(x) * 16)
-    expect_equal(four$updates, one$updates)
+    expect_identical(two$optimizer, "synchronized_cpu_fixed_point")
+    expect_identical(two$resources$effective_cpu_workers, 2L)
+    expect_equal(two$resources$delta_ram_bytes, nrow(x) * 16)
+    expect_equal(two$updates, one$updates)
     expect_gt(abs(mean(expected[1:64, 1L]) -
         mean(expected[65:128, 1L])), 1)
     resumed_path <- file.path(root, "resumed.f32")
     plan <- fastEmbedR:::massive_umap_optimize_plan(graph,
         source, resumed_path, 30L, 2L, 0.05, 0.1, 1,
-        1L, 8192L, "256MB", "cpu", 4L,
+        1L, 8192L, "256MB", "cpu", 2L,
         cpu_update = "synchronized")
     saved <- fastEmbedR:::massive_umap_checkpoint_prepare(
         plan, TRUE, FALSE, 5L)
@@ -3361,21 +3358,21 @@ test_that("synchronized CPU UMAP is explicit and worker-invariant", {
         graph$weights_path, graph$n_vertices,
         input, "f32", 2L, resumed_path, 30L, 2L,
         0.05, 0.1, 1, 1L, 8192L, plan$limit,
-        0L, 0, 0, 5L, interrupt, "memory", 4L,
+        0L, 0, 0, 5L, interrupt, "memory", 2L,
         "synchronized"), "simulated synchronized interruption")
     resumed <- massive_umap_optimize(graph, source,
         resumed_path, n_epochs = 30L, negative_sample_rate = 2L,
         learning_rate = 0.05, memory_limit = "256MB",
-        cpu_update = "synchronized", n.cores = 4L,
+        cpu_update = "synchronized", n.cores = 2L,
         checkpoint = TRUE, resume = TRUE, checkpoint_every = 5L)
     expect_identical(massive_read_rows(resumed, 1L, nrow(x)),
-        massive_read_rows(four, 1L, nrow(x)))
+        massive_read_rows(two, 1L, nrow(x)))
     expect_error(massive_umap_optimize(graph, source,
-        file.path(root, "invalid.f32"), n.cores = 4L),
+        file.path(root, "invalid.f32"), n.cores = 2L),
         "explicit")
     expect_error(massive_umap_optimize(graph, source,
         file.path(root, "small.f32"), cpu_update = "synchronized",
-        n.cores = 4L, memory_limit = "64MB"), "memory_limit")
+        n.cores = 2L, memory_limit = "64MB"), "memory_limit")
     bad <- file(graph$indices_path, "r+b")
     seek(bad, file.info(graph$indices_path)$size - 4L)
     writeBin(0L, bad, size = 4L, endian = "little")
@@ -3385,7 +3382,7 @@ test_that("synchronized CPU UMAP is explicit and worker-invariant", {
         graph$weights_path, graph$n_vertices,
         input, "f32", 2L, file.path(root, "bad.f32"),
         2L, 2L, 0.05, 0.1, 1, 1L, 8192L,
-        256 * 1024^2, n_threads = 4L,
+        256 * 1024^2, n_threads = 2L,
         cpu_update = "synchronized"), "invalid targets")
 })
 

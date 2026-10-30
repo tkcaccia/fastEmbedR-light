@@ -74,6 +74,6 @@ dst <- matrix(
     d[cbind(rep(seq_len(nrow(d)), each = k), as.vector(t(idx)))],
     nrow = nrow(d), byrow = TRUE
 )
-layout <- umap_knn(idx, dst, seed = 1)
+layout <- umap_knn(idx, dst, seed = 1, n.cores = 1)
 plot(layout, pch = 21, bg = iris$Species)
 }

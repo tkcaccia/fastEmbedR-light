@@ -267,9 +267,9 @@ fast_knn_umap_cuda_gpu_core <- function(
 #' dst <- matrix(d[cbind(rep(seq_len(nrow(d)), each = k), as.vector(t(idx)))],
 #'     nrow = nrow(d), byrow = TRUE
 #' )
-#' prep <- prepare_umap_knn(idx, dst)
-#' y1 <- umap_knn(prep, seed = 1)
-#' y2 <- umap_knn(prep, seed = 2)
+#' prep <- prepare_umap_knn(idx, dst, n.cores = 1)
+#' y1 <- umap_knn(prep, seed = 1, n.cores = 1)
+#' y2 <- umap_knn(prep, seed = 2, n.cores = 1)
 #' @name prepare_umap_knn
 NULL
 
@@ -1447,7 +1447,7 @@ spectral_knn_init <- function(
 #'     d[cbind(rep(seq_len(nrow(d)), each = k), as.vector(t(idx)))],
 #'     nrow = nrow(d), byrow = TRUE
 #' )
-#' layout <- umap_knn(idx, dst, seed = 1)
+#' layout <- umap_knn(idx, dst, seed = 1, n.cores = 1)
 #' plot(layout, pch = 21, bg = iris$Species)
 #' @export
 umap_knn <- function(indices,

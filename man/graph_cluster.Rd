@@ -61,7 +61,7 @@ have CPU, CUDA, and Metal implementations. Walktrap is CPU-only. No Python,
 }
 \examples{
 x <- scale(as.matrix(iris[, 1:4]))
-graph <- knn_graph(x, k = 15)
+graph <- knn_graph(x, k = 15, n.cores = 1)
 clusters <- graph_cluster(graph, method = "leiden", seed = 1)
 table(clusters$membership)
 }

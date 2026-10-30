@@ -55,5 +55,5 @@ by landmark UMAP and t-SNE transformations.
 x <- scale(as.matrix(iris[, 1:4]))
 ref <- x[1:100, , drop = FALSE]
 qry <- x[101:150, , drop = FALSE]
-knn <- precompute_query_knn(ref, qry, k = 10, backend = "cpu")
+knn <- precompute_query_knn(ref, qry, k = 10, backend = "cpu", n.cores = 1)
 }

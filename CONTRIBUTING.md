@@ -20,8 +20,17 @@ their affected backend and include evidence appropriate to that backend.
 For a CPU build:
 
 ```sh
-R CMD build .
-R CMD check --as-cran --no-manual fastEmbedR_*.tar.gz
+package_checkout="$(pwd)"
+check_work="$(mktemp -d)"
+mkdir -p "$check_work/library"
+(
+  cd "$check_work"
+  R CMD build "$package_checkout"
+  set -- "$check_work"/fastEmbedR_*.tar.gz
+  test "$#" -eq 1 && test -f "$1" || exit 1
+  R_LIBS="$check_work/library${R_LIBS:+:$R_LIBS}" \
+    R CMD check --as-cran "$1"
+)
 ```
 
 Run the tests from an installed package, or during development with:
@@ -29,6 +38,32 @@ Run the tests from an installed package, or during development with:
 ```sh
 Rscript -e 'testthat::test_local()'
 ```
+
+The ordinary CPU suite must finish below 180 elapsed seconds and below
+180 total CPU seconds on the standard check host. The test helper scopes
+package defaults to one worker and, when available, sets one BLAS worker;
+parallel correctness tests explicitly use two workers. Settings are restored
+when the test run ends, including on failure. No external OpenMP cap is used.
+Meaningful CPU tests run on CRAN too; hardware tests require real devices.
+
+For repeatable timing, start R with one BLAS worker before the runtime loads:
+
+```sh
+mkdir -p output/test-budget
+env -u OMP_NUM_THREADS -u OMP_THREAD_LIMIT -u OMP_WAIT_POLICY \
+  OPENBLAS_NUM_THREADS=1 GOTO_NUM_THREADS=1 MKL_NUM_THREADS=1 \
+  BLIS_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1 \
+  Rscript .github/scripts/run-testthat-timed.R "$PWD/output/test-budget"
+```
+
+Install the matching fresh source archive in a private library first and
+record its checksum. To test directly from its unpacked directory, invoke the
+runner using its absolute path in this checkout. The CSV records CPU, elapsed time, pass/fail/warning/skip counts, and the
+limit. Build and check the same archive with `R CMD check --as-cran`, including
+manual generation on a TeX-enabled host. CI enables CPU-to-elapsed checks for
+examples, tests, and vignettes and rejects timing notes or a test budget breach.
+Coverage instrumentation has a separate cost and is not the standard timing
+profile.
 
 Generate host-side coverage evidence with:
 

@@ -792,7 +792,7 @@ validate_pca_request <- function(ncomp, tsne_init, n.cores) {
 #' fit <- pca(
 #'     as.matrix(iris[, 1:4]),
 #'     ncomp = 2,
-#'     n.cores = 2,
+#'     n.cores = 1,
 #'     seed = 1,
 #'     tsne_init = TRUE
 #' )

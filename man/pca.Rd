@@ -123,7 +123,7 @@ requests fail instead of being reported as GPU work.
 fit <- pca(
     as.matrix(iris[, 1:4]),
     ncomp = 2,
-    n.cores = 2,
+    n.cores = 1,
     seed = 1,
     tsne_init = TRUE
 )

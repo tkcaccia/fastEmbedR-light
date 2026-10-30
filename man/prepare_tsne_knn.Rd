@@ -45,6 +45,8 @@ dst <- matrix(d[cbind(rep(seq_len(nrow(d)), each = k), as.vector(t(idx)))],
     nrow = nrow(d), byrow = TRUE
 )
 prep <- prepare_tsne_knn(idx, dst, perplexity = 5)
-y1 <- tsne_knn(prep, seed = 1, early_exaggeration_iter = 5, n_iter = 10)
-y2 <- tsne_knn(prep, seed = 2, early_exaggeration_iter = 5, n_iter = 10)
+y1 <- tsne_knn(prep, seed = 1, n.cores = 1,
+    early_exaggeration_iter = 5, n_iter = 10)
+y2 <- tsne_knn(prep, seed = 2, n.cores = 1,
+    early_exaggeration_iter = 5, n_iter = 10)
 }

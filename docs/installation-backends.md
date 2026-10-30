@@ -158,7 +158,10 @@ exact CUDA KNN with an independent base-R distance oracle, runs numerical t-SNE
 validation, times `testthat`, and executes `R CMD check --as-cran`. The test
 fails if metadata indicates CPU fallback or host-resident CUDA KNN output.
 
-The default testthat limit is 180 seconds and can be changed only explicitly:
+The default testthat limit is strictly below 180 seconds for both elapsed
+time and total CPU time (including completed child processes). Timing evidence
+also records test counts. A hardware campaign can change its budget only
+explicitly:
 
 ```sh
 FASTEMBEDR_TESTTHAT_MAX_SECONDS=180 \

@@ -28,7 +28,8 @@ y_umap <- fastEmbedR::umap_knn(
     knn, graph_mode = "fuzzy", backend = "cpu", seed = 4
 )
 y_tsne <- fastEmbedR::tsne_knn(
-    knn, perplexity = 5, backend = "cpu", seed = 4
+    knn, perplexity = 5, backend = "cpu", n.cores = 1,
+    early_exaggeration_iter = 50, n_iter = 200, seed = 4
 )
 
 pc <- fastEmbedR::pca(
@@ -37,7 +38,8 @@ pc <- fastEmbedR::pca(
 )
 fit <- fastEmbedR::tsne(
     x, perplexity = 5, Y_init = pc$tsne_init,
-    backend = "cpu", n.cores = 1, seed = 4
+    backend = "cpu", n.cores = 1,
+    early_exaggeration_iter = 50, n_iter = 200, seed = 4
 )
 
 landmark_fit <- fastEmbedR::umap(

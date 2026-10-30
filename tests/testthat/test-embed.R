@@ -948,7 +948,10 @@ test_that("CPU UMAP and t-SNE return genuine three-dimensional layouts", {
 })
 
 test_that("UMAP reports requested and validated effective CPU workers", {
-    skip_on_cran()
+    config <- fastEmbedR:::fast_knn_umap_config(240L, 15L, "cpu")
+    config <- fastEmbedR:::apply_umap_thread_override(config, 8L)
+    expect_identical(config$n.cores_requested, 8L)
+    expect_identical(config$n.cores_effective, 4L)
     set.seed(911)
     x <- matrix(rnorm(240 * 5), nrow = 240)
     d <- as.matrix(stats::dist(x))
@@ -961,10 +964,10 @@ test_that("UMAP reports requested and validated effective CPU workers", {
     )
     prepared <- prepare_umap_knn(
         indices, distances,
-        backend = "cpu", n.cores = 8,
+        backend = "cpu", n.cores = 2,
         graph_mode = "fuzzy"
     )
-    expect_identical(prepared$config$n.cores_requested, 8L)
-    expect_identical(prepared$config$n.cores_effective, 4L)
-    expect_identical(prepared$config$n_threads, 4L)
+    expect_identical(prepared$config$n.cores_requested, 2L)
+    expect_identical(prepared$config$n.cores_effective, 2L)
+    expect_identical(prepared$config$n_threads, 2L)
 })

@@ -223,7 +223,7 @@ cannot be combined with landmarking.
 \examples{
 fit <- tsne(
     as.matrix(iris[, 1:4]),
-    perplexity = 5,
+    perplexity = 5, n.cores = 1,
     early_exaggeration_iter = 5, n_iter = 10, seed = 1
 )
 plot(fit, labels = iris$Species)

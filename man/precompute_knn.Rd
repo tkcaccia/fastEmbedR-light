@@ -55,6 +55,6 @@ error; no CPU fallback is reported as GPU work.
 }
 \examples{
 x <- scale(as.matrix(iris[, 1:4]))
-knn <- precompute_knn(x, k = 15, backend = "cpu", n.cores = 2)
-layout <- umap_knn(knn, backend = "cpu", seed = 1)
+knn <- precompute_knn(x, k = 15, backend = "cpu", n.cores = 1)
+layout <- umap_knn(knn, backend = "cpu", seed = 1, n.cores = 1)
 }
