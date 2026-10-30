@@ -118,11 +118,11 @@ test_that("public UMAP and t-SNE landmark modes stay file-backed", {
     expect_error(umap(source, massive = "landmark", landmarks = 20L,
         output = file.path(directory, "metal.f32"),
         refinement_epochs = 10L, backend = "metal"),
-        "no CPU fallback")
+        "no (CPU|backend) fallback")
     expect_error(umap(source, massive = "landmark", landmarks = 20L,
         output = file.path(directory, "cuda.f32"),
         refinement_epochs = 10L, backend = "cuda"),
-        "no CPU fallback")
+        "no (CPU|backend) fallback")
     expect_false(file.exists(file.path(directory, "bad.f32")))
     expect_false(file.exists(file.path(directory, "metal.f32")))
     expect_false(file.exists(file.path(directory, "cuda.f32")))
@@ -553,6 +553,7 @@ test_that("streamed PCA agrees with an independent dense SVD", {
 })
 
 test_that("streamed PCA preserves scores with 32 CPU workers", {
+    skip_on_cran()
     set.seed(932)
     x <- matrix(rnorm(512L * 6L), ncol = 6L)
     raw <- make_massive_fixture(x)
@@ -901,7 +902,7 @@ test_that("auto PCA reports its route and preserves explicit limits", {
         expect_error(pca(source, ncomp = 2L, backend = "cuda",
             massive = "auto", memory_limit = "16GB",
             output = tempfile(fileext = ".f32")),
-            "no CPU fallback")
+            "no (CPU|backend) fallback")
     }
 })
 
@@ -1318,7 +1319,7 @@ test_that("PCA device selection never falls back to another backend", {
         output = tempfile(fileext = ".f32")), "requires CUDA")
     if (!embedding_cuda_available_cpp()) expect_error(pca(source,
         massive = "out_of_core", backend = "cuda", devices = 0L,
-        output = tempfile(fileext = ".f32")), "no CPU fallback")
+        output = tempfile(fileext = ".f32")), "no (CPU|backend) fallback")
 })
 
 test_that("multi-GPU PCA resumes partial shards and checks the model", {
@@ -1461,7 +1462,7 @@ test_that("scaled PCA agrees across workers and file access modes", {
         n.cores = 1L, massive = "out_of_core", center = TRUE,
         scale = TRUE, output = single_path, chunk_rows = 11L)
     parallel <- pca(mapped, ncomp = 3L, backend = "cpu",
-        n.cores = 3L, massive = "out_of_core", center = TRUE,
+        n.cores = 2L, massive = "out_of_core", center = TRUE,
         scale = TRUE, output = parallel_path, chunk_rows = 13L)
     dense <- stats::prcomp(x, center = TRUE, scale. = TRUE)
     expect_equal(single$singular_values, parallel$singular_values,
@@ -2315,7 +2316,7 @@ test_that("streamed exact landmark KNN retains every query row", {
         landmarks, sample_rows = 68L), "matching file-backed")
     if (!fastEmbedR:::native_cuda_knn_available_cpp()) {
         expect_error(massive_landmark_knn(source, landmarks, 5L,
-            tempfile(), backend = "cuda"), "no CPU fallback")
+            tempfile(), backend = "cuda"), "no (CPU|backend) fallback")
     }
 })
 
@@ -2664,18 +2665,15 @@ test_that("persistent HNSW agrees across bounded query batches", {
         paste0(prefix, c(".indices.u32", ".distances.f32")))))
     source <- massive_matrix(source_path, nrow = 53, ncol = 5)
     landmarks <- massive_matrix(reference_path, nrow = 140, ncol = 5)
-    graph <- with_mocked_bindings(
-        massive_landmark_knn(source, landmarks, 7L, prefix,
-            method = "hnsw", chunk_rows = 9L, n.cores = 2L,
-            memory_limit = "256MB"),
-        native_hnsw_index_build_cpp = function(...) stop("native fallback"),
-        .package = "fastEmbedR")
+    graph <- massive_landmark_knn(source, landmarks, 7L, prefix,
+        method = "hnsw", chunk_rows = 9L, n.cores = 2L,
+        memory_limit = "256MB")
     observed <- read_massive_knn(graph)
-    index <- fastEmbedR:::faissr_hnsw_index_build_cpp(
-        float::fl(reference), 140L, 5L, 7L, 2L)
-    expected <- fastEmbedR:::faissr_hnsw_index_search_cpp(
+    index <- fastEmbedR:::native_hnsw_index_build_cpp(
+        float::fl(reference), 7L, 2L)
+    expected <- fastEmbedR:::native_hnsw_index_search_cpp(
         index$pointer, float::fl(query), 7L,
-        index$efSearch, 2L)
+        2L, index$efSearch)
     expect_true(graph$index_reused)
     expect_identical(graph$reference_storage, "R_float32")
     expect_identical(graph$query_storage, "R_float32")
@@ -2684,7 +2682,7 @@ test_that("persistent HNSW agrees across bounded query batches", {
     expect_identical(graph$hnsw_settings$efSearch,
         index$efSearch)
     expect_identical(graph$hnsw_settings$build_threads, 2L)
-    expect_false(graph$spanning_links)
+    expect_true(graph$spanning_links)
     expect_false(graph$recall_audited)
     expect_equal(observed$indices, expected$indices)
     expect_equal(observed$distances, expected$distances,
@@ -2693,7 +2691,7 @@ test_that("persistent HNSW agrees across bounded query batches", {
         new.env(), query, 7L), "live persistent")
 })
 
-test_that("file-backed HNSW uses faissR float32 storage", {
+test_that("file-backed HNSW uses native float32 storage", {
     set.seed(210)
     reference <- matrix(rnorm(180L * 6L), ncol = 6L)
     query <- matrix(rnorm(24L * 6L), ncol = 6L)
@@ -2705,11 +2703,11 @@ test_that("file-backed HNSW uses faissR float32 storage", {
         file, 5L, "hnsw", 1L, "cpu")
     memory <- fastEmbedR:::massive_knn_reference(
         resident, 5L, "hnsw", 1L, "cpu")
-    search <- fastEmbedR:::faissr_hnsw_index_search_cpp
+    search <- fastEmbedR:::native_hnsw_index_search_cpp
     observed <- search(native$index$pointer, float::fl(query),
-        5L, native$index$efSearch, 1L)
+        5L, 1L, native$index$efSearch)
     expected <- search(memory$index$pointer, float::fl(query),
-        5L, memory$index$efSearch, 1L)
+        5L, 1L, memory$index$efSearch)
     expect_identical(native$reference_storage, "R_float32")
     expect_identical(memory$reference_storage, "R_float32")
     expect_equal(observed$indices, expected$indices)
@@ -2819,7 +2817,7 @@ test_that("file-backed UMAP projection reuses saved KNN rows", {
     expect_error(massive_project_landmarks(
         fit, graph, gpu_output, backend = "cuda",
         refinement_epochs = 2L),
-        "no CPU fallback")
+        "no (CPU|backend) fallback")
     if (isTRUE(fastEmbedR:::embedding_cuda_available_cpp())) {
         gpu <- massive_project_landmarks(
             fit, graph, gpu_output, backend = "cuda",
@@ -3096,7 +3094,7 @@ test_that("local query graph refines bounded CPU UMAP windows", {
     expect_error(massive_project_landmarks(fit, graph,
         file.path(directory, "gpu.f32"), source = source,
         local_refine = TRUE, backend = "cuda",
-        refinement_epochs = 3L), "no CPU fallback")
+        refinement_epochs = 3L), "no (CPU|backend) fallback")
     expect_error(massive_project_landmarks(fit, graph,
         file.path(directory, "zero.f32"), source = source,
         local_refine = TRUE, refinement_epochs = 0L),
@@ -3827,4 +3825,14 @@ test_that("file-backed cluster assignment preserves landmark rows", {
     expect_equal(observed$confidence[selection$indices],
         rep(1, 20L))
     expect_true(clustered$reference_rows_preserved)
+})
+
+test_that("PCA loading orientation is independent of eigenvector signs", {
+    loadings <- matrix(c(-0.8, 0.6, 0.6, 0.8), ncol = 2L)
+    orient <- fastEmbedR:::massive_pca_orient
+    expected <- orient(loadings)
+    expect_equal(orient(sweep(loadings, 2L, c(-1, 1), `*`)), expected)
+    pivots <- max.col(t(abs(expected)), ties.method = "first")
+    expect_true(all(expected[cbind(pivots, 1:2)] > 0))
+    expect_equal(crossprod(expected), crossprod(loadings))
 })

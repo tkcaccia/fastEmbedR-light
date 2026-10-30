@@ -78,6 +78,19 @@ jobs:
         run: |
           bash -n .github/scripts/run-hardware-validation.sh
           Rscript -e 'parse(file = ".github/scripts/validate-hardware.R")'
+      - name: Install shell portability checker on Linux
+        if: runner.os == 'Linux'
+        run: |
+          if ! command -v checkbashisms >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y devscripts
+          fi
+      - name: Install shell portability checker on macOS
+        if: runner.os == 'macOS'
+        run: |
+          if ! command -v checkbashisms >/dev/null; then
+            brew install checkbashisms
+          fi
       - name: Check
         shell: Rscript {0}
         run: |

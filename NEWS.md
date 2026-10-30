@@ -1,5 +1,9 @@
 # fastEmbedR 0.1
 
+* Remove the faissR installation and linking dependency. Ordinary and
+  persistent CPU HNSW searches use the package-owned implementation.
+  Checkpoints identify the fastEmbedR native library.
+
 * Report landmark reference-stage memory ratios and query-to-reference KNN
   payload estimates separately from timing. These estimates distinguish
   optimizer memory reduction from total peak RSS.

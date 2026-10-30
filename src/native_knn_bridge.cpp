@@ -17,7 +17,8 @@ Rcpp::List native_hnsw_index_build_impl(SEXP data,
                                         int k,
                                         int n_threads,
                                         const std::string& metric,
-                                        double target_recall);
+                                        double target_recall,
+                                        int m, int ef_construction);
 Rcpp::List native_hnsw_index_search_impl(SEXP pointer,
                                          SEXP query,
                                          int k,
@@ -102,9 +103,11 @@ Rcpp::List native_hnsw_index_build_cpp(SEXP data,
                                        int k,
                                        int n_threads = 1,
                                        std::string metric = "euclidean",
-                                       double target_recall = 0.99) {
+                                       double target_recall = 0.99,
+                                       int m = 0,
+                                       int ef_construction = 0) {
   return native_hnsw_index_build_impl(
-    data, k, n_threads, metric, target_recall
+    data, k, n_threads, metric, target_recall, m, ef_construction
   );
 }
 

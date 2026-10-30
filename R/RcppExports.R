@@ -265,18 +265,6 @@ project_embedding_affine_parallel_cpp <- function(reference_data_sexp, query_dat
     .Call(`_fastEmbedR_project_embedding_affine_parallel_cpp`, reference_data_sexp, query_data_sexp, reference_layout_sexp, projection_indices, projection_distances_sexp, max_neighbors, ridge, max_extrapolation, n_threads)
 }
 
-faissr_hnsw_search_cpp <- function(data, query, n, p, k, target_recall, n_threads, distance_storage) {
-    .Call(`_fastEmbedR_faissr_hnsw_search_cpp`, data, query, n, p, k, target_recall, n_threads, distance_storage)
-}
-
-faissr_hnsw_index_build_cpp <- function(data, n, p, k, n_threads, m = 0L, ef_construction = 0L) {
-    .Call(`_fastEmbedR_faissr_hnsw_index_build_cpp`, data, n, p, k, n_threads, m, ef_construction)
-}
-
-faissr_hnsw_index_search_cpp <- function(index, query, k, ef_search, n_threads) {
-    .Call(`_fastEmbedR_faissr_hnsw_index_search_cpp`, index, query, k, ef_search, n_threads)
-}
-
 knn_connectivity_range_cpp <- function(indices, col_start, n_cols) {
     .Call(`_fastEmbedR_knn_connectivity_range_cpp`, indices, col_start, n_cols)
 }
@@ -593,8 +581,8 @@ native_hnsw_query_cpp <- function(data, query, k, n_threads = 1L, metric = "eucl
     .Call(`_fastEmbedR_native_hnsw_query_cpp`, data, query, k, n_threads, metric, target_recall)
 }
 
-native_hnsw_index_build_cpp <- function(data, k, n_threads = 1L, metric = "euclidean", target_recall = 0.99) {
-    .Call(`_fastEmbedR_native_hnsw_index_build_cpp`, data, k, n_threads, metric, target_recall)
+native_hnsw_index_build_cpp <- function(data, k, n_threads = 1L, metric = "euclidean", target_recall = 0.99, m = 0L, ef_construction = 0L) {
+    .Call(`_fastEmbedR_native_hnsw_index_build_cpp`, data, k, n_threads, metric, target_recall, m, ef_construction)
 }
 
 native_hnsw_index_search_cpp <- function(pointer, query, k, n_threads = 1L, ef_search = 0L) {

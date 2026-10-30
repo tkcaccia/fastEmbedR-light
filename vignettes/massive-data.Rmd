@@ -415,7 +415,7 @@ built without loading the whole matrix:
 ```{r eval=FALSE}
 graph <- fastEmbedR::massive_full_knn_graph(
     source, k = 30L, output = "full_knn",
-    n.cores = 8L, chunk_rows = 256L,
+    n.cores = 2L, chunk_rows = 256L,
     reference_chunk_rows = 8192L,
     memory_limit = "8GB", checkpoint = TRUE,
     checkpoint_every = 100L
@@ -478,7 +478,7 @@ Directed UMAP memberships can be calculated from a distance graph without
 loading all edges into memory:
 
 ```{r eval=FALSE}
-weighted <- fastEmbedR::massive_umap_memberships(graph, n.cores = 4L)
+weighted <- fastEmbedR::massive_umap_memberships(graph, n.cores = 2L)
 weighted_edges <- fastEmbedR::massive_read_graph_edges(
     weighted, first = 1, n = 100)
 ```

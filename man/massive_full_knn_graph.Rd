@@ -87,8 +87,9 @@ shape-based default. A positive value must be at least \code{k + 1} and
 cannot exceed the smallest reference shard. Other methods reject it.}
 
 \item{hnsw_build}{Optional named list with \code{m} and \code{ef_construction} for
-an explicitly calibrated CPU HNSW build. \code{NULL} uses faissR's
-shape-based policy. Other methods and backends reject this setting.}
+an explicitly calibrated CPU HNSW build. \code{NULL} uses the native
+implementation's shape-based policy. Other methods and backends
+reject this setting.}
 
 \item{devices}{Optional CUDA device indices. Two or more devices require
 exact or IVF sharded search and a file-backed source. CPU and Metal
@@ -99,7 +100,7 @@ A validated \code{fastEmbedR_massive_graph} descriptor.
 }
 \description{
 Exact search scans all reference blocks for each query block.
-\code{method = "hnsw_sharded"} builds one persistent faissR CPU HNSW index
+\code{method = "hnsw_sharded"} builds one persistent native CPU HNSW index
 per reference shard, searches all query blocks against it, and merges
 candidates into the file-backed output. It is approximate; its target
 recall is not measured unless \code{audit_rows} is positive. Multiple shard

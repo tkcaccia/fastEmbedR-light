@@ -51,6 +51,7 @@ tools/*
 /examples/
 cache/
 results/
+/output/
 fastEmbedR-rlayout/
 backups/
 validation-artifacts/

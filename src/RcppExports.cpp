@@ -1107,56 +1107,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// faissr_hnsw_search_cpp
-SEXP faissr_hnsw_search_cpp(SEXP data, SEXP query, SEXP n, SEXP p, SEXP k, SEXP target_recall, SEXP n_threads, SEXP distance_storage);
-RcppExport SEXP _fastEmbedR_faissr_hnsw_search_cpp(SEXP dataSEXP, SEXP querySEXP, SEXP nSEXP, SEXP pSEXP, SEXP kSEXP, SEXP target_recallSEXP, SEXP n_threadsSEXP, SEXP distance_storageSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type data(dataSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type query(querySEXP);
-    Rcpp::traits::input_parameter< SEXP >::type n(nSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type p(pSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type k(kSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type target_recall(target_recallSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type n_threads(n_threadsSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type distance_storage(distance_storageSEXP);
-    rcpp_result_gen = Rcpp::wrap(faissr_hnsw_search_cpp(data, query, n, p, k, target_recall, n_threads, distance_storage));
-    return rcpp_result_gen;
-END_RCPP
-}
-// faissr_hnsw_index_build_cpp
-Rcpp::List faissr_hnsw_index_build_cpp(SEXP data, int n, int p, int k, int n_threads, int m, int ef_construction);
-RcppExport SEXP _fastEmbedR_faissr_hnsw_index_build_cpp(SEXP dataSEXP, SEXP nSEXP, SEXP pSEXP, SEXP kSEXP, SEXP n_threadsSEXP, SEXP mSEXP, SEXP ef_constructionSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type data(dataSEXP);
-    Rcpp::traits::input_parameter< int >::type n(nSEXP);
-    Rcpp::traits::input_parameter< int >::type p(pSEXP);
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
-    Rcpp::traits::input_parameter< int >::type m(mSEXP);
-    Rcpp::traits::input_parameter< int >::type ef_construction(ef_constructionSEXP);
-    rcpp_result_gen = Rcpp::wrap(faissr_hnsw_index_build_cpp(data, n, p, k, n_threads, m, ef_construction));
-    return rcpp_result_gen;
-END_RCPP
-}
-// faissr_hnsw_index_search_cpp
-Rcpp::List faissr_hnsw_index_search_cpp(SEXP index, SEXP query, int k, int ef_search, int n_threads);
-RcppExport SEXP _fastEmbedR_faissr_hnsw_index_search_cpp(SEXP indexSEXP, SEXP querySEXP, SEXP kSEXP, SEXP ef_searchSEXP, SEXP n_threadsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type index(indexSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type query(querySEXP);
-    Rcpp::traits::input_parameter< int >::type k(kSEXP);
-    Rcpp::traits::input_parameter< int >::type ef_search(ef_searchSEXP);
-    Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(faissr_hnsw_index_search_cpp(index, query, k, ef_search, n_threads));
-    return rcpp_result_gen;
-END_RCPP
-}
 // knn_connectivity_range_cpp
 Rcpp::List knn_connectivity_range_cpp(IntegerMatrix indices, int col_start, int n_cols);
 RcppExport SEXP _fastEmbedR_knn_connectivity_range_cpp(SEXP indicesSEXP, SEXP col_startSEXP, SEXP n_colsSEXP) {
@@ -2559,8 +2509,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // native_hnsw_index_build_cpp
-Rcpp::List native_hnsw_index_build_cpp(SEXP data, int k, int n_threads, std::string metric, double target_recall);
-RcppExport SEXP _fastEmbedR_native_hnsw_index_build_cpp(SEXP dataSEXP, SEXP kSEXP, SEXP n_threadsSEXP, SEXP metricSEXP, SEXP target_recallSEXP) {
+Rcpp::List native_hnsw_index_build_cpp(SEXP data, int k, int n_threads, std::string metric, double target_recall, int m, int ef_construction);
+RcppExport SEXP _fastEmbedR_native_hnsw_index_build_cpp(SEXP dataSEXP, SEXP kSEXP, SEXP n_threadsSEXP, SEXP metricSEXP, SEXP target_recallSEXP, SEXP mSEXP, SEXP ef_constructionSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -2569,7 +2519,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
     Rcpp::traits::input_parameter< std::string >::type metric(metricSEXP);
     Rcpp::traits::input_parameter< double >::type target_recall(target_recallSEXP);
-    rcpp_result_gen = Rcpp::wrap(native_hnsw_index_build_cpp(data, k, n_threads, metric, target_recall));
+    Rcpp::traits::input_parameter< int >::type m(mSEXP);
+    Rcpp::traits::input_parameter< int >::type ef_construction(ef_constructionSEXP);
+    rcpp_result_gen = Rcpp::wrap(native_hnsw_index_build_cpp(data, k, n_threads, metric, target_recall, m, ef_construction));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -3023,9 +2975,6 @@ static const R_CallMethodDef CallEntries[] = {
     {"_fastEmbedR_project_embedding_knn_cpp", (DL_FUNC) &_fastEmbedR_project_embedding_knn_cpp, 3},
     {"_fastEmbedR_project_embedding_affine_cpp", (DL_FUNC) &_fastEmbedR_project_embedding_affine_cpp, 8},
     {"_fastEmbedR_project_embedding_affine_parallel_cpp", (DL_FUNC) &_fastEmbedR_project_embedding_affine_parallel_cpp, 9},
-    {"_fastEmbedR_faissr_hnsw_search_cpp", (DL_FUNC) &_fastEmbedR_faissr_hnsw_search_cpp, 8},
-    {"_fastEmbedR_faissr_hnsw_index_build_cpp", (DL_FUNC) &_fastEmbedR_faissr_hnsw_index_build_cpp, 7},
-    {"_fastEmbedR_faissr_hnsw_index_search_cpp", (DL_FUNC) &_fastEmbedR_faissr_hnsw_index_search_cpp, 5},
     {"_fastEmbedR_knn_connectivity_range_cpp", (DL_FUNC) &_fastEmbedR_knn_connectivity_range_cpp, 3},
     {"_fastEmbedR_knn_connectivity_cpp", (DL_FUNC) &_fastEmbedR_knn_connectivity_cpp, 1},
     {"_fastEmbedR_umap_graph_csr_cpp", (DL_FUNC) &_fastEmbedR_umap_graph_csr_cpp, 6},
@@ -3105,7 +3054,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_fastEmbedR_massive_posting_search_cpp", (DL_FUNC) &_fastEmbedR_massive_posting_search_cpp, 14},
     {"_fastEmbedR_native_hnsw_knn_cpp", (DL_FUNC) &_fastEmbedR_native_hnsw_knn_cpp, 5},
     {"_fastEmbedR_native_hnsw_query_cpp", (DL_FUNC) &_fastEmbedR_native_hnsw_query_cpp, 6},
-    {"_fastEmbedR_native_hnsw_index_build_cpp", (DL_FUNC) &_fastEmbedR_native_hnsw_index_build_cpp, 5},
+    {"_fastEmbedR_native_hnsw_index_build_cpp", (DL_FUNC) &_fastEmbedR_native_hnsw_index_build_cpp, 7},
     {"_fastEmbedR_native_hnsw_index_search_cpp", (DL_FUNC) &_fastEmbedR_native_hnsw_index_search_cpp, 5},
     {"_fastEmbedR_native_exact_knn_cpp", (DL_FUNC) &_fastEmbedR_native_exact_knn_cpp, 5},
     {"_fastEmbedR_native_exact_query_cpp", (DL_FUNC) &_fastEmbedR_native_exact_query_cpp, 6},

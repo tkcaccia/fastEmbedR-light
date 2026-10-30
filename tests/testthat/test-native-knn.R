@@ -319,13 +319,13 @@ test_that("native CPU exact query search matches an exhaustive reference", {
     expect_true(observed$exact_recall_by_construction)
 })
 
-test_that("large CPU matrix search uses faissR HNSW without fallback", {
+test_that("large CPU matrix search uses native HNSW without fallback", {
     set.seed(42)
     x <- matrix(rnorm(5000L * 4L), nrow = 5000L)
     observed <- precompute_knn(x, k = 8L, backend = "cpu", n.cores = 2L)
-    expect_identical(observed$engine, "faissr_cpu_hnsw")
-    expect_identical(observed$backend_used, "faiss_hnsw")
-    expect_identical(observed$method, "faiss_hnsw")
+    expect_identical(observed$engine, "native_cpu_hnsw")
+    expect_identical(observed$backend_used, "native_hnsw")
+    expect_identical(observed$method, "native_hnsw")
     expect_false(any(observed$indices == row(observed$indices)))
     expect_false(observed$recall_audited)
     expect_identical(
@@ -336,9 +336,9 @@ test_that("large CPU matrix search uses faissR HNSW without fallback", {
         x, x[1:4, , drop = FALSE], k = 8L,
         backend = "cpu", n.cores = 2L
     )
-    expect_identical(query$engine, "faissr_cpu_hnsw")
-    expect_identical(query$backend_used, "faiss_hnsw")
-    expect_identical(query$method, "faiss_hnsw_query")
+    expect_identical(query$engine, "native_cpu_hnsw")
+    expect_identical(query$backend_used, "native_hnsw")
+    expect_identical(query$method, "native_hnsw_query")
     expect_identical(dim(query$indices), c(4L, 8L))
     cosine <- precompute_knn(
         x, k = 8L, metric = "cosine", backend = "cpu", n.cores = 2L
@@ -349,22 +349,22 @@ test_that("large CPU matrix search uses faissR HNSW without fallback", {
         float_knn <- precompute_knn(
             float::fl(x), k = 8L, backend = "cpu", n.cores = 2L
         )
-        expect_identical(float_knn$engine, "faissr_cpu_hnsw")
+        expect_identical(float_knn$engine, "native_cpu_hnsw")
         expect_true(inherits(float_knn$distances, "float32"))
     }
 })
 
-test_that("a failed FAISS HNSW call never switches to native HNSW", {
+test_that("a failed native HNSW call never switches to exact search", {
     x <- matrix(rnorm(40), nrow = 10L)
     local_mocked_bindings(
-        run_faissr_hnsw = function(...) stop("FAISS HNSW unavailable"),
+        native_hnsw_knn_cpp = function(...) stop("native HNSW unavailable"),
         .package = "fastEmbedR"
     )
     expect_error(
         fastEmbedR:::fastembedr_nn_without_self(
             x, k = 2L, backend = "cpu", method = "hnsw"
         ),
-        "FAISS HNSW unavailable"
+        "native HNSW unavailable"
     )
 })
 

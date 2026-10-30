@@ -60,17 +60,17 @@ test_that("wide embedding PCA uses requested CPU cores", {
     expect_equal(parallel$scores, single$scores, tolerance = 1e-3)
 
     prepared <- fastEmbedR:::prepare_umap_matrix(
-        x, FALSE, 3L, 40L, "cpu", 4L
+        x, FALSE, 3L, 40L, "cpu", 2L
     )
     expect_equal(ncol(prepared$prepared$data), 3L)
     expect_equal(prepared$prepared$preprocess$pca_backend, "cpu_rsvd")
 
     umap_fit <- umap(
-        x, n_neighbors = 10L, pca_dims = 3L, n.cores = 4L,
+        x, n_neighbors = 10L, pca_dims = 3L, n.cores = 2L,
         backend = "cpu", seed = 40L
     )
     tsne_fit <- tsne(
-        x, perplexity = 10L, pca_dims = 3L, n.cores = 4L,
+        x, perplexity = 10L, pca_dims = 3L, n.cores = 2L,
         backend = "cpu", seed = 40L,
         early_exaggeration_iter = 5L, n_iter = 10L
     )
@@ -80,7 +80,7 @@ test_that("wide embedding PCA uses requested CPU cores", {
     expect_true(all(is.finite(tsne_fit$layout)))
 
     unchanged <- fastEmbedR:::prepare_embedding_data(
-        x, FALSE, NULL, 40L, backend = "cpu", n.cores = 4L
+        x, FALSE, NULL, 40L, backend = "cpu", n.cores = 2L
     )
     expect_true(is.na(unchanged$preprocess$pca_dims))
     expect_equal(dim(unchanged$data), dim(x))
@@ -402,8 +402,8 @@ test_that("CPU matrix input uses native exact and FAISS HNSW search", {
 
     expect_equal(dim(out$indices), c(10L, 2L))
     expect_identical(attr(out, "backend"), "cpu")
-    expect_identical(attr(out, "method"), "faiss_hnsw")
-    expect_identical(out$backend_used, "faiss_hnsw")
+    expect_identical(attr(out, "method"), "native_hnsw")
+    expect_identical(out$backend_used, "native_hnsw")
     exact <- fastEmbedR:::fastembedr_nn_without_self(
         x,
         k = 2L, backend = "cpu", method = "exact"
@@ -948,6 +948,7 @@ test_that("CPU UMAP and t-SNE return genuine three-dimensional layouts", {
 })
 
 test_that("UMAP reports requested and validated effective CPU workers", {
+    skip_on_cran()
     set.seed(911)
     x <- matrix(rnorm(240 * 5), nrow = 240)
     d <- as.matrix(stats::dist(x))

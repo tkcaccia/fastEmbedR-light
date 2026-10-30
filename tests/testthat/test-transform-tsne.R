@@ -66,24 +66,24 @@ test_that(paste(
         backend = "cpu",
         seed = 406L
     )
-    four_threads <- transform_tsne(
+    two_threads <- transform_tsne(
         reference_layout,
         knn = query_knn,
         perplexity = 5,
         n_iter = 5L,
         n_negatives = 12L,
         exact_repulsion_threshold = 8L,
-        n.cores = 4L,
+        n.cores = 2L,
         backend = "cpu",
         seed = 406L
     )
 
-    expect_equal(dim(four_threads), dim(one_thread))
+    expect_equal(dim(two_threads), dim(one_thread))
     expect_equal(
-        as.numeric(four_threads), as.numeric(one_thread),
+        as.numeric(two_threads), as.numeric(one_thread),
         tolerance = 0
     )
-    expect_equal(attr(four_threads, "fastEmbedR_config")$n.cores, 4L)
+    expect_equal(attr(two_threads, "fastEmbedR_config")$n.cores, 2L)
 })
 
 test_that("transform_tsne CPU batching preserves fixed-reference results", {
@@ -124,7 +124,7 @@ test_that("transform_tsne CPU batching preserves fixed-reference results", {
         n_iter = 4L,
         n_negatives = 10L,
         exact_repulsion_threshold = 8L,
-        n.cores = 4L,
+        n.cores = 2L,
         backend = "cpu",
         seed = 407L
     )
@@ -137,7 +137,7 @@ test_that("transform_tsne CPU batching preserves fixed-reference results", {
         n_iter = 4L,
         n_negatives = 10L,
         exact_repulsion_threshold = 8L,
-        n.cores = 4L,
+        n.cores = 2L,
         backend = "cpu",
         seed = 407L
     )

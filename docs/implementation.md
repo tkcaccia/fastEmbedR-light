@@ -17,7 +17,7 @@ introduced by McInnes and colleagues [7,13]. The t-SNE path follows the
 probabilistic neighbor-embedding objective of van der Maaten and Hinton [1],
 with modern interpolation-based optimization ideas from FIt-SNE and openTSNE [3-4].
 The package is intentionally KNN-first. CPU one-call KNN uses native exact
-search or faissR HNSW. Metal exact/IVF-Flat is native; CUDA builds link to
+search or native HNSW. Metal exact/IVF-Flat is native; CUDA builds link to
 the Apache-2.0 RAPIDS cuVS C API. Embedding does not call Python or
 `reticulate`. Graph/affinity
 construction,
@@ -115,21 +115,18 @@ float32 distance evaluation and deterministic top-k selection. Every candidate
 is examined, so recall is one by construction. The same rule applies to
 query-to-reference search with fewer than 5,000 reference rows.
 
-For larger Euclidean in-memory inputs, fastEmbedR calls faissR's public
-`faissR_hnsw_search_v1` C-callable interface through its native bridge; it
-does not call an R function from faissR. The target recall is 0.99. faissR
-selects `M`,
-`efConstruction`, and `efSearch` using its calibration policy. The
-result records the actual FAISS HNSW engine and effort parameters; the recall
-target is not a per-call recall measurement or guarantee on unseen data.
-If faissR cannot run Euclidean HNSW, the matrix fit fails rather than switching
-to native HNSW. Cosine and correlation retain the native HNSW route and report
-that engine explicitly.
+For larger in-memory inputs, fastEmbedR uses its package-owned native HNSW
+implementation for Euclidean, cosine, and correlation distances. The target
+recall is 0.99. A deterministic shape, metric, and neighborhood-size policy
+selects `M`, `efConstruction`, and `efSearch`. Results identify the native
+engine and its settings; the target is not a per-call recall measurement or
+guarantee on unseen data. An incomplete HNSW search fails explicitly instead
+of switching to exhaustive search.
 
-File-backed, sharded CPU search retains a separate native HNSW index because
-that route builds and queries bounded partitions without loading the full
-matrix. Its native tuning and recall evidence must be evaluated separately
-from faissR-backed in-memory fits.
+File-backed and sharded searches use the same native implementation with a
+persistent index for each reference partition. Explicit build and search
+settings remain available. Checkpoints identify the fastEmbedR native library;
+checkpoints from the faissR-backed implementation cannot be resumed.
 
 The Metal implementation has two routes. Exact search assigns one SIMD group
 to each candidate distance and merges per-group top-k lists on device. IVF-Flat
@@ -152,7 +149,7 @@ For reproducibility, the one-call API fixes only the requested KNN device class
 and a small/large data policy:
 
 - CPU one-call embeddings use native exact KNN below 5,000 observations and
-  faissR HNSW otherwise. Metal uses native exact KNN below 4,096 observations and
+  native HNSW otherwise. Metal uses native exact KNN below 4,096 observations and
   recall-tuned IVF-Flat for larger inputs.
 - CUDA one-call embeddings use cuVS brute force below 100,000 samples and
   recall-tuned cuVS IVF-Flat at or above 100,000 samples. Input is converted

@@ -14,7 +14,7 @@ Copyright: See inst/COPYRIGHTS and inst/NOTICE for source-level ownership,
 Description: A native float32 UMAP implementation and a configurable
     interpolation-based t-SNE implementation for embeddings from data
     matrices or precomputed nearest-neighbor indices and distances. One-call
-    workflows use native CPU exact or FAISS HNSW search and Apple Metal
+    workflows use native CPU exact or HNSW search and Apple Metal
     exact or IVF-Flat search. Optional CUDA support links to the RAPIDS cuVS
     C API while
     retaining nearest-neighbor results on the device.
@@ -27,15 +27,12 @@ Description: A native float32 UMAP implementation and a configurable
     Optional graph utilities support downstream Louvain, Leiden, and Walktrap
     community detection.
 License: MIT + file LICENSE
-URL: https://github.com/tkcaccia/fastEmbedR,
-    https://tkcaccia.github.io/fastEmbedR/,
-    https://github.com/tkcaccia/fastEmbedR-extra
-BugReports: https://github.com/tkcaccia/fastEmbedR/issues
+URL: https://github.com/tkcaccia/fastEmbedR-light
+BugReports: https://github.com/tkcaccia/fastEmbedR-light/issues
 Encoding: UTF-8
 Depends:
-    R (>= 4.6.0)
+    R (>= 4.5.0)
 Imports:
-    faissR (>= 0.1),
     methods,
     parallel,
     Rcpp,
@@ -51,9 +48,8 @@ Suggests:
     rmarkdown,
     testthat
 LinkingTo:
-    faissR (>= 0.1),
     Rcpp (>= 1.0.13)
-SystemRequirements: C++17; FAISS CPU library for the imported faissR package.
+SystemRequirements: C++17.
     Optional acceleration uses either the Apple SDK
     Metal frameworks on Apple Silicon (macOS 14 or later and Xcode 15 or
     later), or an NVIDIA CUDA Toolkit. RAPIDS cuVS is needed only for CUDA
@@ -62,5 +58,6 @@ SystemRequirements: C++17; FAISS CPU library for the imported faissR package.
     Leiden/Louvain additionally require Python RAPIDS cuGraph and Dask-CUDA.
 VignetteBuilder: knitr
 Roxygen: list(markdown = TRUE)
-Config/roxygen2/version: 8.1.0
+Config/roxygen2/version: 7.3.3
 Config/testthat/edition: 3
+RoxygenNote: 7.3.3

@@ -9,26 +9,16 @@
 
 ## CPU
 
-A CPU build needs R 4.6 or later, Rcpp, faissR (including its FAISS
-dependency), and the C++17 toolchain configured for that R installation.
-It does not need CUDA or
-cuVS. In-memory Euclidean CPU searches with at least 5,000 rows call faissR's
-compiled HNSW interface directly. Smaller searches use fastEmbedR's native
-exact implementation; cosine and correlation HNSW remain package-native.
-
-Install faissR first, following its
-[installation guide](https://github.com/tkcaccia/faissR/blob/main/docs/installation.md).
-The required faissR release must be available in the Bioconductor software
-repository or CRAN before submitting fastEmbedR to CRAN. A Bioconductor
-submission under review does not yet satisfy this requirement.
+A CPU build needs R 4.5 or later, Rcpp, and the C++17 toolchain configured
+for that R installation. It does not require faissR, FAISS, CUDA, or cuVS.
+CPU searches use package-owned exact search below 5,000 reference rows and
+native HNSW for larger references, with Euclidean, cosine, or correlation
+distance. File-backed and sharded searches reuse the native persistent index.
 
 ```sh
 FASTEMBEDR_USE_CUDA=0 \
 R CMD INSTALL --preclean fastEmbedR_0.1.tar.gz
 ```
-
-The compiled native HNSW implementation remains for file-backed, sharded
-search. It is not substituted for faissR in ordinary in-memory CPU fits.
 
 CPU PCA uses the BLAS linked to R. On Linux, configuration tests whether
 that library is OpenBLAS and whether its single-precision SGEMM works.

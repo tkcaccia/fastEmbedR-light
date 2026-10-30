@@ -1,53 +1,63 @@
-test_that("persistent faissR HNSW reports the actual search", {
+test_that("CPU embeddings do not load or depend on faissR", {
+    description <- utils::packageDescription("fastEmbedR")
+    dependencies <- paste(description$Imports, description$LinkingTo,
+        description$Depends, description$Suggests)
+    expect_false(grepl("faissR", dependencies, fixed = TRUE))
+    set.seed(246)
+    x <- matrix(rnorm(120), ncol = 4L)
+    knn <- fastEmbedR:::fastembedr_nn_without_self(
+        x, 5L, backend = "cpu", method = "hnsw", n_threads = 1L)
+    expect_identical(knn$method, "native_hnsw")
+    expect_false("faissR" %in% loadedNamespaces())
+    expect_false("faissR" %in% names(getLoadedDLLs()))
+})
+
+test_that("persistent native HNSW reports the actual search", {
     set.seed(244)
     reference <- matrix(rnorm(90L * 6L), ncol = 6L)
     data <- float::fl(reference)
-    index <- fastEmbedR:::faissr_hnsw_index_build_cpp(
-        data, 90L, 6L, 5L, 2L)
-    expected <- faissR:::nn_tune_faiss_hnsw_cpp(
-        90L, 6L, 5L, "euclidean", 0.99)
-    expect_identical(index$method, "faissr_hnsw_persistent")
-    expect_identical(index$M, expected$m)
-    expect_identical(index$efConstruction, expected$ef_construction)
-    expect_identical(index$efSearch, expected$ef_search)
-    expect_identical(index$tuning_rule, expected$rule)
-    expect_true(inherits(index$pointer, "faissR_faiss_hnsw_index"))
-    calibrated <- fastEmbedR:::faissr_hnsw_index_build_cpp(
-        data, 90L, 6L, 5L, 2L, 16L, 80L)
+    index <- fastEmbedR:::native_hnsw_index_build_cpp(
+        data, 5L, 2L, "euclidean", 0.99)
+    expect_identical(index$method, "native_hnsw")
+    expect_gte(index$M, 2L)
+    expect_gte(index$efConstruction, index$M)
+    expect_type(index$pointer, "externalptr")
+    calibrated <- fastEmbedR:::native_hnsw_index_build_cpp(
+        data, 5L, 2L, "euclidean", 0.99, 16L, 80L)
     expect_identical(calibrated$M, 16L)
     expect_identical(calibrated$efConstruction, 80L)
     expect_identical(calibrated$tuning_rule, "explicit")
-    expect_error(fastEmbedR:::faissr_hnsw_index_build_cpp(
-        data, 90L, 6L, 5L, 2L, 16L, 0L), "together")
-    found <- fastEmbedR:::faissr_hnsw_index_search_cpp(
-        index$pointer, data[1:3, , drop = FALSE], 6L, 80L, 2L)
+    expect_error(fastEmbedR:::native_hnsw_index_build_cpp(
+        data, 5L, 2L, "euclidean", 0.99, 16L, 0L), "together")
+    found <- fastEmbedR:::native_hnsw_index_search_cpp(
+        index$pointer, data[1:3, , drop = FALSE], 6L, 2L, 80L)
     expect_identical(found$backend, "cpu")
-    expect_identical(found$method, "faissr_hnsw_query_reused")
+    expect_identical(found$method, "native_hnsw_query_reused")
     expect_true(found$index_reused)
-    expect_identical(found$ef_search, 80L)
+    expect_identical(found$ef_search_used, 80L)
     expect_true(all(found$indices >= 1L & found$indices <= 90L))
     expect_true(all(is.finite(found$distances)))
-    expect_error(fastEmbedR:::faissr_hnsw_index_search_cpp(
+    expect_error(fastEmbedR:::native_hnsw_index_search_cpp(
         new("externalptr"), data[1:2, , drop = FALSE],
-        6L, 80L, 2L))
+        6L, 2L, 80L))
 })
 
 test_that("HNSW build timing includes reference staging", {
     source <- list(nrow = 4L, ncol = 2L)
     data <- float::fl(matrix(seq_len(8L), ncol = 2L))
     result <- with_mocked_bindings(
-        fastEmbedR:::massive_faiss_hnsw_reference(source, 2L, 1L),
+        fastEmbedR:::massive_native_hnsw_reference(source, 2L, 1L),
         massive_read_rows_cpp = function(...) {
             Sys.sleep(0.1)
             data
         },
-        faissr_hnsw_index_build_cpp = function(...) list(),
+        native_hnsw_index_build_cpp = function(...) list(),
         .package = "fastEmbedR")
     expect_gt(result$build_seconds, 0.07)
     expect_identical(result$reference_storage, "R_float32")
 })
 
-test_that("full CPU HNSW exposes faissR backend and audited recall", {
+test_that("full CPU HNSW exposes native backend and audited recall", {
     set.seed(245)
     reference <- matrix(rnorm(90L * 6L), ncol = 6L)
     path <- tempfile(fileext = ".f32")
@@ -64,9 +74,9 @@ test_that("full CPU HNSW exposes faissR backend and audited recall", {
         hnsw_build = list(m = 16L, ef_construction = 80L),
         memory_limit = "256MB", audit_rows = 8L)
     expect_identical(graph$backend, "cpu")
-    expect_identical(graph$method, "faissr_cpu_hnsw_sharded")
+    expect_identical(graph$method, "native_cpu_hnsw_sharded")
     expect_false(graph$exact)
-    expect_false(graph$spanning_links)
+    expect_true(graph$spanning_links)
     expect_true(graph$recall_audited)
     expect_equal(graph$target_recall, 0.99)
     expect_identical(graph$hnsw_build_requested,

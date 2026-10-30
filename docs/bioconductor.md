@@ -133,9 +133,8 @@ tested when the corresponding toolchain is available.
 
 ## Minimal Bioconductor Check
 
-A CPU-only check does not need cuVS, but the imported faissR package requires
-its compatible CPU FAISS installation. Repository availability of faissR must
-be resolved before a Bioconductor submission:
+A CPU-only check needs Rcpp and a C++17 compiler. It does not require
+faissR, FAISS, or cuVS.
 
 ```sh
 LC_ALL=C \

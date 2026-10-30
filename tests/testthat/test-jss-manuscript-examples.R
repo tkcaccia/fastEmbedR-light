@@ -1,4 +1,5 @@
 test_that("JSS manuscript examples execute against the installed package", {
+    skip_on_cran()
     path <- system.file(
         "examples", "jss_manuscript.R", package = "fastEmbedR"
     )

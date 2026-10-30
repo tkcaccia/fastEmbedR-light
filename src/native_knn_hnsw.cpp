@@ -117,11 +117,14 @@ class CompactHNSW {
             output_distances[pos] = candidate.distance;
             if (++used == k) break;
           }
-          if (used < k) exact_fill(query, k, used, output_ids, output_distances);
         }
       });
     }
     for (std::thread& worker : workers) worker.join();
+    if (std::find(output_ids.begin(), output_ids.end(), -1) !=
+        output_ids.end()) {
+      Rcpp::stop("HNSW returned too few neighbors; no exact fallback used.");
+    }
   }
 
   void search_queries(const std::vector<float>& queries,
@@ -153,9 +156,7 @@ class CompactHNSW {
           std::vector<NodeDistance> candidates = search_vector(
             query, std::max(k, effort), visited
           );
-          if (static_cast<int>(candidates.size()) < k) {
-            candidates = exact_query(query, k);
-          }
+          if (static_cast<int>(candidates.size()) < k) continue;
           for (int rank = 0; rank < k; ++rank) {
             const std::size_t pos = static_cast<std::size_t>(query_id) * k + rank;
             output_ids[pos] = candidates[static_cast<std::size_t>(rank)].id;
@@ -165,6 +166,10 @@ class CompactHNSW {
       });
     }
     for (std::thread& worker : workers) worker.join();
+    if (std::find(output_ids.begin(), output_ids.end(), -1) !=
+        output_ids.end()) {
+      Rcpp::stop("HNSW returned too few neighbors; no exact fallback used.");
+    }
   }
 
   std::size_t graph_bytes() const {
@@ -691,45 +696,7 @@ class CompactHNSW {
     return search_layer(query, nearest, ef, 0, visited);
   }
 
-  std::vector<NodeDistance> exact_query(const float* query, int k) const {
-    std::priority_queue<NodeDistance, std::vector<NodeDistance>, FartherFirst> heap;
-    for (int candidate = 0; candidate < n_; ++candidate) {
-      NodeDistance value{distance(query, point(candidate)), candidate};
-      if (heap.size() < static_cast<std::size_t>(k) || closer(value, heap.top())) {
-        heap.push(value);
-        if (heap.size() > static_cast<std::size_t>(k)) heap.pop();
-      }
-    }
-    std::vector<NodeDistance> exact;
-    exact.reserve(static_cast<std::size_t>(k));
-    while (!heap.empty()) {
-      exact.push_back(heap.top());
-      heap.pop();
-    }
-    std::sort(exact.begin(), exact.end(), closer);
-    return exact;
-  }
 
-  void exact_fill(int query, int k, int used, std::vector<int>& output_ids, std::vector<float>& output_distances) const {
-    std::priority_queue<NodeDistance, std::vector<NodeDistance>, FartherFirst> heap;
-    for (int candidate = 0; candidate < n_; ++candidate) {
-      if (candidate == query) continue;
-      NodeDistance value{distance(query, candidate), candidate};
-      if (heap.size() < static_cast<std::size_t>(k) || closer(value, heap.top())) {
-        heap.push(value);
-        if (heap.size() > static_cast<std::size_t>(k)) heap.pop();
-      }
-    }
-    std::vector<NodeDistance> exact;
-    while (!heap.empty()) { exact.push_back(heap.top()); heap.pop(); }
-    std::sort(exact.begin(), exact.end(), closer);
-    (void)used;
-    for (int rank = 0; rank < k; ++rank) {
-      std::size_t pos = static_cast<std::size_t>(query) * k + rank;
-      output_ids[pos] = exact[rank].id;
-      output_distances[pos] = exact[rank].distance;
-    }
-  }
 };
 
 struct HnswIndexState {
@@ -748,7 +715,8 @@ Rcpp::List native_hnsw_index_build_impl(SEXP data_sexp,
                                         int k,
                                         int n_threads,
                                         const std::string& metric_name,
-                                        double target_recall) {
+                                        double target_recall,
+                                        int m, int ef_construction) {
   using Clock = std::chrono::steady_clock;
   const auto start = Clock::now();
   const auto metric = fastembedr::parse_knn_metric(metric_name);
@@ -759,9 +727,21 @@ Rcpp::List native_hnsw_index_build_impl(SEXP data_sexp,
   if (n < 2 || p < 1 || k < 1 || k > n || n_threads < 1) {
     Rcpp::stop("Invalid persistent HNSW index input.");
   }
-  const auto tuning = fastembedr::tune_native_hnsw(
+  auto tuning = fastembedr::tune_native_hnsw(
     n, p, k, metric, target_recall
   );
+  if ((m == 0) != (ef_construction == 0)) {
+    Rcpp::stop("M and efConstruction must be specified together");
+  }
+  if (m < 0 || ef_construction < 0 ||
+      (m > 0 && (m < 2 || ef_construction < m))) {
+    Rcpp::stop("Invalid explicit HNSW build settings");
+  }
+  if (m > 0) {
+    tuning.m = m;
+    tuning.ef_construction = ef_construction;
+    tuning.rule = "explicit";
+  }
   std::unique_ptr<CompactHNSW> index(new CompactHNSW(
     std::move(input.values), n, p, tuning.m,
     tuning.ef_construction, tuning.ef_search, true

@@ -51,3 +51,7 @@
 .*[.]log$
 .*[.]tmp$
 .*[.]bak$
+^\.agents($|/)
+^\.aws($|/)
+^\.codex($|/)
+^src/Makevars$

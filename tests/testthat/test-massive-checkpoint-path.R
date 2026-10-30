@@ -151,16 +151,16 @@ test_that("KNN checkpoints reject a changed implementation", {
         "not match"))
 })
 
-test_that("HNSW shard-boundary resume pins the faissR library", {
+test_that("HNSW shard-boundary resume pins the native library", {
     directory <- tempfile()
     dir.create(directory)
     on.exit(unlink(directory, recursive = TRUE))
     input <- file.path(directory, "input.f32")
     writeBin(as.numeric(1:8), input, size = 4L)
     source <- massive_matrix(input, 4L, 2L)
-    identity <- fastEmbedR:::massive_faissr_identity()
+    identity <- fastEmbedR:::massive_native_hnsw_identity()
     expect_identical(identity$native, unname(tools::md5sum(
-        getLoadedDLLs()[["faissR"]][["path"]])))
+        getLoadedDLLs()[["fastEmbedR"]][["path"]])))
     paths <- stats::setNames(paste0(file.path(directory, "graph"),
         c(".indices.u32", ".distances.f32")),
         c("indices", "distances"))
@@ -180,6 +180,6 @@ test_that("HNSW shard-boundary resume pins the faissR library", {
     expect_error(with_mocked_bindings(
         fastEmbedR:::massive_sharded_checkpoint(source,
             setup, paths, "cpu", TRUE),
-        massive_faissr_identity = function() changed,
+        massive_native_hnsw_identity = function() changed,
         .package = "fastEmbedR"), "checkpoint")
 })

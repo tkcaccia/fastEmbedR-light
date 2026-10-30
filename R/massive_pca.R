@@ -312,6 +312,13 @@ massive_pca_covariance_metal <- function(source, chunk_rows, center) {
         fit_statistics_seconds = unname(proc.time()[[3L]] - started))
 }
 
+massive_pca_orient <- function(loadings) {
+    pivots <- max.col(t(abs(loadings)), ties.method = "first")
+    signs <- sign(loadings[cbind(pivots, seq_len(ncol(loadings)))])
+    signs[signs == 0] <- 1
+    sweep(loadings, 2L, signs, `*`)
+}
+
 massive_pca_decomposition <- function(source, rank, center, scale,
         resources, n.cores, backend, seed, saved_stats = NULL) {
     if (!massive_pca_covariance_route(source$ncol, backend)) {
@@ -336,8 +343,9 @@ massive_pca_decomposition <- function(source, rank, center, scale,
         stop("PCA scaling requires positive variance in every column.",
             call. = FALSE)
     }
-    covariance <- stats$covariance / outer(deviations, deviations)
-    eig <- eigen(covariance, symmetric = TRUE)
+    eig <- eigen(stats$covariance / outer(deviations, deviations),
+        symmetric = TRUE)
+    eig$vectors <- massive_pca_orient(eig$vectors)
     fit <- list(
         center = stats$center, scale = deviations,
         decomposition_backend = "cpu_eigen",
@@ -382,7 +390,8 @@ massive_pca_wide_decomposition <- function(source, rank, center,
     eig <- eigen((small + t(small)) / 2, symmetric = TRUE)
     fit <- list(center = moments$center, scale = moments$scale,
         decomposition_backend = "cpu_qr_eigen",
-        loadings = basis %*% eig$vectors[, seq_len(rank), drop = FALSE],
+        loadings = massive_pca_orient(
+            basis %*% eig$vectors[, seq_len(rank), drop = FALSE]),
         singular_values = sqrt(pmax(eig$values[seq_len(rank)], 0) *
             (source$nrow - 1)), sketch_size = width,
         moments_backend = "cpu", sketch_backend = backend)

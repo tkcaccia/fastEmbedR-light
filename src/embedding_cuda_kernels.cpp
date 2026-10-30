@@ -31,9 +31,6 @@
 #include <nccl.h>
 #endif
 
-#ifndef CCCL_IGNORE_DEPRECATED_STREAM_REF_HEADER
-#define CCCL_IGNORE_DEPRECATED_STREAM_REF_HEADER
-#endif
 #include <cub/cub.cuh>
 #include <thrust/iterator/counting_iterator.h>
 
@@ -43,16 +40,9 @@
 #ifdef FASTEMBEDR_HAS_RAFT
 #include <R_ext/Print.h>
 #define printf REprintf
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
 #include <raft/core/device_mdspan.hpp>
 #include <raft/core/handle.hpp>
 #include <raft/linalg/tsvd.cuh>
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 #undef printf
 #endif
 
@@ -3549,10 +3539,6 @@ int select_cuda_pca_decomposition(int requested_method,
     static_cast<std::size_t>(p) >= crossover ? 1 : 2;
 }
 
-#if defined(FASTEMBEDR_HAS_RAFT) && defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#endif
 template <typename HostT>
 int cuda_pca_scores_to_device(const HostT* values,
                               int n,
@@ -4000,9 +3986,6 @@ int cuda_pca_scores_to_device(const HostT* values,
     return 1;
   }
 }
-#if defined(FASTEMBEDR_HAS_RAFT) && defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
 
 } // namespace
 

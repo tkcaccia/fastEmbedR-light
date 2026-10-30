@@ -100,20 +100,9 @@ massive_checkpoint_implementation_identity <- function() {
         r_code = code_hash)
 }
 
-massive_faissr_identity <- function() {
-    if (!requireNamespace("faissR", quietly = TRUE)) stop(
-        "Cannot identify the required faissR implementation.",
-        call. = FALSE)
-    dll <- getLoadedDLLs()[["faissR"]]
-    if (is.null(dll)) stop(
-        "Cannot identify the loaded faissR native library.",
-        call. = FALSE)
-    native <- unname(tools::md5sum(dll[["path"]]))
-    if (is.na(native)) stop(
-        "Cannot hash the loaded faissR native library.",
-        call. = FALSE)
-    list(package_version = as.character(
-        utils::packageVersion("faissR")), native = native)
+massive_native_hnsw_identity <- function() {
+    identity <- massive_checkpoint_implementation_identity()
+    identity[c("package_version", "native")]
 }
 
 massive_checkpoint_write <- function(state, path) {

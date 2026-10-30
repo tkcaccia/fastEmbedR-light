@@ -38,7 +38,7 @@ search with bounded query batches and a resident reference.}
 \item{n.cores}{CPU worker count.}
 
 \item{method}{\code{"auto"}, \code{"exact"} (also Metal), \code{"stream_exact"} (CPU with a
-file-backed reference), \code{"hnsw"} (CPU faissR), \code{"ivf"} (CUDA), or
+file-backed reference), \code{"hnsw"} (CPU native HNSW), \code{"ivf"} (CUDA), or
 \code{"sharded_exact"} or \code{"sharded_ivf"} (CUDA with a file-backed
 reference). Sharded IVF is approximate and needs a recall audit.}
 
@@ -75,7 +75,7 @@ Searches a disk-backed matrix in bounded query batches. The default
 search keeps the landmark reference in RAM or VRAM. Explicit CPU
 \code{stream_exact} scans bounded reference blocks without materializing the
 full landmark matrix; this exact route is quadratic in query and
-landmark counts. CPU exact and persistent faissR HNSW, and CUDA exact
+landmark counts. CPU exact and persistent native HNSW, and CUDA exact
 or IVF-Flat search retain references across query batches. Metal exact
 search retains a host float32 reference but reuploads it each batch.
 CUDA needs cuVS support. IVF-Flat calibrates on the first query batch;

@@ -71,7 +71,7 @@ reproducible script:
 fit_cpu <- fastEmbedR::umap(
     x,
     backend = "cpu",
-    n.cores = 4,
+    n.cores = 2,
     seed = 4
 )
 
@@ -79,7 +79,7 @@ tsne_cpu <- fastEmbedR::tsne(
     x,
     perplexity = 10,
     backend = "cpu",
-    n.cores = 4,
+    n.cores = 2,
     seed = 4
 )
 
@@ -101,7 +101,7 @@ For an interactive session, set defaults once and omit `backend` and
 `n.cores` from later calls:
 
 ```r
-old_options <- options(backend = "cpu", n.cores = 4L)
+old_options <- options(backend = "cpu", n.cores = 2L)
 
 u <- fastEmbedR::umap(x)
 t <- fastEmbedR::tsne(x, perplexity = 10)
@@ -650,7 +650,7 @@ par(old_par)
 ```
 
 CPU uses exhaustive exact query-to-reference search below 5,000 reference
-rows and compiled faissR HNSW for larger Euclidean searches. Other CPU
+rows and compiled native HNSW for larger Euclidean searches. Other CPU
 metrics use native HNSW. Metal uses native exact search for small
 references and recall-tuned IVF-Flat for larger references, followed by
 fixed-reference transforms. CUDA uses native exact or IVF-Flat query search

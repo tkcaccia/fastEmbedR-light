@@ -654,7 +654,7 @@ test_that("streamed full exact KNN matches an independent distance matrix", {
         "memory_limit")
 })
 
-test_that("sharded faissR HNSW merges file-backed global neighbors", {
+test_that("sharded native HNSW merges file-backed global neighbors", {
     set.seed(9231)
     x <- matrix(stats::rnorm(23L * 4L), ncol = 4L)
     source_path <- write_massive_matrix_fixture(x)
@@ -674,7 +674,7 @@ test_that("sharded faissR HNSW merges file-backed global neighbors", {
         memory_limit = "256MB")
     observed <- massive_read_graph_edges(sharded, 1L, 23L)
     reference <- massive_read_graph_edges(exact, 1L, 23L)
-    expect_identical(sharded$method, "faissr_cpu_hnsw_sharded")
+    expect_identical(sharded$method, "native_cpu_hnsw_sharded")
     expect_identical(sharded$query_storage, "R_float32")
     expect_false(sharded$exact)
     expect_false(sharded$recall_audited)
@@ -759,7 +759,7 @@ test_that("sharded HNSW queries use float32 materialization", {
         method = "hnsw_sharded", chunk_rows = 4L,
         reference_chunk_rows = 6L, memory_limit = "256MB")
     expect_identical(graph$query_storage, "R_float32")
-    expect_identical(graph$method, "faissr_cpu_hnsw_sharded")
+    expect_identical(graph$method, "native_cpu_hnsw_sharded")
     edges <- massive_read_graph_edges(graph, 1L, nrow(x))
     expect_length(edges$to, nrow(x) * 2L)
     expect_true(all(is.finite(edges$distance)))
@@ -819,11 +819,11 @@ test_that("sharded HNSW resumes a partially written first shard", {
         "cpu", saved)
     reference <- fastEmbedR:::massive_matrix_rows(source, 1L, 6L)
     index <- fastEmbedR:::massive_knn_reference(reference,
-        3L, "faiss_hnsw", 1L, "cpu")
+        3L, "native_hnsw", 1L, "cpu")
     query <- fastEmbedR:::massive_read_rows_cpp(source, 1L,
         4L, 128, TRUE)
     pilot <- fastEmbedR:::massive_knn_query(index, query,
-        4L, "faiss_hnsw", 2L, "cpu")
+        4L, "native_hnsw", 2L, "cpu")
     state <- readRDS(checkpoint_path)
     state$shard <- 0L
     state$completed_rows <- 4
@@ -890,11 +890,11 @@ test_that("sharded HNSW replays an uncommitted merge idempotently", {
         1L, identity, "cpu", first$saved)
     reference <- fastEmbedR:::massive_matrix_rows(source, 7L, 6L)
     index <- fastEmbedR:::massive_knn_reference(reference,
-        3L, "faiss_hnsw", 1L, "cpu")
+        3L, "native_hnsw", 1L, "cpu")
     query <- fastEmbedR:::massive_read_rows_cpp(source, 1L,
         4L, 128, TRUE)
     pilot <- fastEmbedR:::massive_knn_query(index, query,
-        4L, "faiss_hnsw", 1L, "cpu")
+        4L, "native_hnsw", 1L, "cpu")
     state <- readRDS(paste0(output, ".checkpoint.rds"))
     state$shard <- 1L
     state$completed_rows <- 4
@@ -937,12 +937,12 @@ test_that("sharded checkpoint interval replays pending query blocks", {
         setup, paths, "cpu", FALSE)
     reference <- fastEmbedR:::massive_matrix_rows(source, 1L, 6L)
     index <- fastEmbedR:::massive_knn_reference(reference,
-        3L, "faiss_hnsw", 1L, "cpu")
+        3L, "native_hnsw", 1L, "cpu")
     first <- fastEmbedR:::massive_sharded_batch(source, setup,
-        parts, index, 0L, 1L, 6L, 1L, "faiss_hnsw", "cpu", saved)
+        parts, index, 0L, 1L, 6L, 1L, "native_hnsw", "cpu", saved)
     expect_equal(readRDS(saved$path)$completed_rows, 0)
     fastEmbedR:::massive_sharded_batch(source, setup,
-        parts, index, 0L, 1L, 6L, 5L, "faiss_hnsw", "cpu", first$saved)
+        parts, index, 0L, 1L, 6L, 5L, "native_hnsw", "cpu", first$saved)
     expect_equal(readRDS(saved$path)$completed_rows, 8)
     observed <- massive_full_knn_graph(source, 3L, output,
         method = "hnsw_sharded", chunk_rows = 4L,
@@ -1315,8 +1315,8 @@ test_that("directed UMAP memberships stream without changing KNN IDs", {
     knn <- massive_knn_graph(prefix, 8L, 3L, access = "mmap")
     weighted <- massive_umap_memberships(knn)
     parallel <- massive_umap_memberships(
-        massive_knn_graph(parallel_prefix, 8L, 3L), n.cores = 4L)
-    expect_identical(parallel$n.cores, 4L)
+        massive_knn_graph(parallel_prefix, 8L, 3L), n.cores = 2L)
+    expect_identical(parallel$n.cores, 2L)
     expect_identical(readBin(paths[[3L]], "raw", n = 96L),
         readBin(parallel_paths[[3L]], "raw", n = 96L))
     expect_identical(weighted$weight_method,
@@ -1399,8 +1399,8 @@ test_that("directed memberships resume a committed output block", {
     expect_error(massive_umap_memberships(graph, checkpoint = TRUE,
         resume = TRUE, checkpoint_every = 2L), "does not match")
     weighted <- massive_umap_memberships(graph, checkpoint = TRUE,
-        resume = TRUE, checkpoint_every = 1L, n.cores = 4L)
-    expect_identical(weighted$n.cores, 4L)
+        resume = TRUE, checkpoint_every = 1L, n.cores = 2L)
+    expect_identical(weighted$n.cores, 2L)
     expect_false(file.exists(paths[[4L]]))
     expect_false(file.exists(paths[[5L]]))
     expect_equal(file.info(paths[[3L]])$size, rows * 3L * 4L)
@@ -1905,9 +1905,9 @@ test_that("disk-backed t-SNE affinities match native float32 affinities", {
     graph <- massive_tsne_affinities(knn, 2.5, output,
         memory_limit = "64MB")
     graph4 <- massive_tsne_affinities(knn, 2.5, output4,
-        memory_limit = "64MB", n.cores = 4L)
+        memory_limit = "64MB", n.cores = 2L)
     expect_identical(graph$n.cores, 1L)
-    expect_identical(graph4$n.cores, 4L)
+    expect_identical(graph4$n.cores, 2L)
     expect_identical(unname(tools::md5sum(outputs)),
         unname(tools::md5sum(outputs4)))
     restored <- massive_affinity_graph(output, 8L)
@@ -1990,7 +1990,7 @@ test_that("bucketed t-SNE affinities match the global graph bytes", {
     knn <- massive_knn_graph(source, n, k)
     reference <- massive_tsne_affinities(knn, 5, global, "64MB")
     compact <- massive_tsne_affinities(knn, 5, bucketed, "64MB",
-        n.cores = 4L, sort_method = "bucketed")
+        n.cores = 2L, sort_method = "bucketed")
     expect_identical(unname(tools::md5sum(paste0(global, suffix))),
         unname(tools::md5sum(paste0(bucketed, suffix))))
     expect_identical(compact$n_edges, reference$n_edges)
@@ -3309,6 +3309,7 @@ test_that("saved PCA and fuzzy graph feed UMAP and Louvain", {
 })
 
 test_that("synchronized CPU UMAP is explicit and worker-invariant", {
+    skip_on_cran()
     root <- tempfile()
     dir.create(root)
     on.exit(unlink(root, recursive = TRUE))

@@ -34,20 +34,13 @@ InfoTSNE, PaCMAP, TriMap, or LocalMAP reducers.
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/tkcaccia/fastEmbedR}
-  \item \url{https://tkcaccia.github.io/fastEmbedR/}
-  \item \url{https://github.com/tkcaccia/fastEmbedR-extra}
-  \item Report bugs at \url{https://github.com/tkcaccia/fastEmbedR/issues}
+  \item \url{https://github.com/tkcaccia/fastEmbedR-light}
+  \item Report bugs at \url{https://github.com/tkcaccia/fastEmbedR-light/issues}
 }
 
 }
 \author{
 \strong{Maintainer}: Stefano Cacciatore \email{tkcaccia@gmail.com} (\href{https://orcid.org/0000-0001-7052-7156}{ORCID})
-
-Authors:
-\itemize{
-  \item Stefano Cacciatore \email{tkcaccia@gmail.com} (\href{https://orcid.org/0000-0001-7052-7156}{ORCID})
-}
 
 }
 \keyword{internal}

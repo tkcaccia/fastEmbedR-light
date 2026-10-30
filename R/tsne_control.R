@@ -202,7 +202,7 @@ resolve_opentsne_auto_parameters <- function(
 }
 
 default_tsne_threads <- function() {
-    resolve_n_cores(default = 4L)
+    resolve_n_cores(default = 2L)
 }
 
 metal_opentsne_native_available <- function() {

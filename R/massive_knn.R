@@ -97,8 +97,8 @@ massive_knn_reference <- function(reference, k, method,
         reference_chunk_rows = resources$reference_chunk_rows,
         build_seconds = 0,
         reference_storage = "file_backed_float32"))
-    if (method %in% c("faiss_hnsw", "hnsw")) return(
-        massive_faiss_hnsw_reference(reference, k, n.cores, hnsw_build))
+    if (method %in% c("native_hnsw", "hnsw")) return(
+        massive_native_hnsw_reference(reference, k, n.cores, hnsw_build))
     if (backend == "metal") return(massive_metal_reference(reference))
     started <- proc.time()[[3L]]
     native_buffer <- reference$format != "memory" &&
@@ -141,21 +141,21 @@ massive_metal_reference <- function(reference) {
         reference_storage = "R_float32")
 }
 
-massive_faiss_hnsw_reference <- function(reference, k, n.cores,
+massive_native_hnsw_reference <- function(reference, k, n.cores,
         hnsw_build = NULL) {
     if (!requireNamespace("float", quietly = TRUE)) stop(
-        "Persistent FAISS HNSW requires `float`.", call. = FALSE)
+        "Persistent native HNSW requires `float`.", call. = FALSE)
     started <- proc.time()[[3L]]
     data <- massive_read_rows_cpp(reference, 1L,
         as.integer(reference$nrow),
         4 * reference$nrow * reference$ncol, TRUE)
-    index <- faissr_hnsw_index_build_cpp(data,
-        as.integer(reference$nrow), as.integer(reference$ncol),
-        k, n.cores, hnsw_build$m %||% 0L,
+    index <- native_hnsw_index_build_cpp(data, k, n.cores,
+        "euclidean", 0.99, hnsw_build$m %||% 0L,
         hnsw_build$ef_construction %||% 0L)
     list(index = index, build_seconds = unname(
         proc.time()[[3L]] - started),
-        reference_storage = "R_float32", build_threads = n.cores)
+        reference_storage = "R_float32", build_threads = n.cores,
+        spanning_links = isTRUE(index$spanning_links))
 }
 
 massive_knn_query <- function(state, query, k, method,
@@ -165,10 +165,9 @@ massive_knn_query <- function(state, query, k, method,
     }
     if (backend == "metal") return(native_metal_query_knn_cpp(
         state$matrix, query, k, "exact", "euclidean", 0.99))
-    if (method %in% c("faiss_hnsw", "hnsw")) return(
-        faissr_hnsw_index_search_cpp(state$index$pointer, query,
-            k, if (ef_search == 0L) state$index$efSearch else ef_search,
-            n.cores))
+    if (method %in% c("native_hnsw", "hnsw")) return(
+        native_hnsw_index_search_cpp(state$index$pointer, query,
+            k, n.cores, ef_search))
     if (method == "exact") {
         return(native_exact_index_search_cpp(state$index, query,
             k, n_threads = n.cores))
@@ -214,8 +213,8 @@ massive_knn_checkpoint <- function(x, setup, resume) {
     settings <- list(
         version = 1L,
         implementation = massive_checkpoint_implementation_identity(),
-        faissr = if (setup$method == "hnsw")
-            massive_faissr_identity() else NULL,
+        native_hnsw = if (setup$method == "hnsw")
+            massive_native_hnsw_identity() else NULL,
         query = massive_checkpoint_source_identity(x),
         reference = massive_checkpoint_source_identity(setup$reference),
         k = setup$k, method = setup$method,
@@ -444,9 +443,6 @@ massive_knn_setup <- function(x, reference, k, output, backend,
     if (backend == "cuda" && !native_cuda_knn_available_cpp()) stop(
         "EXPERIMENTAL CUDA KNN requires native cuVS; ",
         "no CPU fallback was used.", call. = FALSE)
-    if (backend == "metal" &&
-        (!native_metal_knn_available_cpp() || x$ncol > 16384L))
-        stop("Metal KNN needs Metal and <=16,384 columns.", call. = FALSE)
     k <- integer_scalar(k)
     if (is.na(k) || k < 1L || k > reference$nrow)
         stop("`k` must be a positive landmark count.", call. = FALSE)
@@ -459,6 +455,9 @@ massive_knn_setup <- function(x, reference, k, output, backend,
     workers <- normalize_nn_threads(n.cores)
     if (backend == "metal" && workers != 1L)
         stop("Metal KNN needs `n.cores = 1`.", call. = FALSE)
+    if (backend == "metal" &&
+        (!native_metal_knn_available_cpp() || x$ncol > 16384L))
+        stop("Metal KNN needs Metal and <=16,384 columns.", call. = FALSE)
     resources <- if (method == "stream_exact")
         massive_full_knn_resources(x, k, chunk_rows,
             reference_chunk_rows, memory_limit, reference) else
@@ -493,8 +492,8 @@ massive_knn_result <- function(x, setup, state, elapsed,
         output_identity = massive_checkpoint_file_identity(unname(paths)),
         implementation_identity =
             massive_checkpoint_implementation_identity(),
-        faissr_identity = if (setup$method == "hnsw")
-            massive_faissr_identity() else NULL,
+        native_hnsw_identity = if (setup$method == "hnsw")
+            massive_native_hnsw_identity() else NULL,
         metric = "euclidean", backend = setup$backend,
         method = setup$method, exact = setup$method %in% c(
             "exact", "stream_exact", "sharded_exact"),
@@ -535,7 +534,7 @@ massive_knn_result <- function(x, setup, state, elapsed,
 #' search keeps the landmark reference in RAM or VRAM. Explicit CPU
 #' `stream_exact` scans bounded reference blocks without materializing the
 #' full landmark matrix; this exact route is quadratic in query and
-#' landmark counts. CPU exact and persistent faissR HNSW, and CUDA exact
+#' landmark counts. CPU exact and persistent native HNSW, and CUDA exact
 #' or IVF-Flat search retain references across query batches. Metal exact
 #' search retains a host float32 reference but reuploads it each batch.
 #' CUDA needs cuVS support. IVF-Flat calibrates on the first query batch;
@@ -563,7 +562,7 @@ massive_knn_result <- function(x, setup, state, elapsed,
 #'   search with bounded query batches and a resident reference.
 #' @param n.cores CPU worker count.
 #' @param method `"auto"`, `"exact"` (also Metal), `"stream_exact"` (CPU with a
-#'   file-backed reference), `"hnsw"` (CPU faissR), `"ivf"` (CUDA), or
+#'   file-backed reference), `"hnsw"` (CPU native HNSW), `"ivf"` (CUDA), or
 #'   `"sharded_exact"` or `"sharded_ivf"` (CUDA with a file-backed
 #'   reference). Sharded IVF is approximate and needs a recall audit.
 #' @param chunk_rows Maximum query rows per batch.
@@ -1332,7 +1331,7 @@ massive_sharded_checkpoint <- function(x, setup, paths, backend,
     signature <- massive_checkpoint_signature(Filter(Negate(is.null), list(
         version = if (backend == "cpu") 4L else 2L, source = source_identity,
         implementation = massive_checkpoint_implementation_identity(),
-        faissr = if (backend == "cpu") massive_faissr_identity() else NULL,
+        native = if (backend == "cpu") massive_native_hnsw_identity() else NULL,
         ef_search = setup$ef_search %||% 0L, hnsw_build = setup$hnsw_build,
         k = setup$k, backend = backend, method = setup$method,
         workers = setup$workers, build_threads =
@@ -1404,7 +1403,7 @@ massive_sharded_probe <- function(x, state, setup, saved, method,
 massive_sharded_query <- function(x, first, rows, method,
         backend = "cpu") {
     view <- massive_matrix_rows(x, first, rows)
-    if (method == "faiss_hnsw" || backend == "metal") return(
+    if (method == "native_hnsw" || backend == "metal") return(
         massive_read_rows_cpp(
         view, 1L, rows, 4 * rows * x$ncol, TRUE))
     massive_reference_buffer_cpp(view)
@@ -1434,7 +1433,7 @@ massive_sharded_batch <- function(x, setup, parts, state, shard,
         identical(found$backend, expected) &&
             identical(found$method, method)
     } else identical(found$backend, "cpu") &&
-        identical(found$method, "faissr_hnsw_query_reused") &&
+        identical(found$method, "native_hnsw_query_reused") &&
         isTRUE(found$index_reused)
     if (!valid) stop("Sharded KNN changed algorithm or backend.",
         call. = FALSE)
@@ -1514,12 +1513,12 @@ massive_index_shard <- function(x, setup, parts, shard,
     reference <- massive_matrix_rows(x, first, count)
     tuning_k <- as.integer(min(setup$k + (backend != "cpu"), count))
     method <- if (setup$method == "ivf_sharded") "ivf" else
-        if (backend == "cpu") "faiss_hnsw" else "exact"
+        if (backend == "cpu") "native_hnsw" else "exact"
     state <- massive_knn_reference(reference, tuning_k,
         method, setup$build_workers %||% setup$workers, backend,
         hnsw_build = setup$hnsw_build)
     if (backend == "cpu" &&
-        !identical(state$index$method, "faissr_hnsw_persistent")) stop(
+        !identical(state$index$method, "native_hnsw")) stop(
         "Expected CPU HNSW index was not built.", call. = FALSE)
     hnsw_settings <- massive_sharded_hnsw_setting(state, setup,
         shard, first, count, backend)
@@ -1568,9 +1567,9 @@ massive_sharded_result <- function(x, paths, setup, backend,
         "native_cuda_cuvs_exact_sharded"
     } else if (backend == "metal") {
         "native_metal_exact_sharded"
-    } else "faissr_cpu_hnsw_sharded"
+    } else "native_cpu_hnsw_sharded"
     graph$exact <- backend != "cpu" && setup$method == "exact"
-    graph$spanning_links <- FALSE
+    graph$spanning_links <- backend == "cpu"
     graph$ef_search_requested <- setup$ef_search
     graph$hnsw_build_requested <- setup$hnsw_build
     graph$hnsw_settings <- hnsw_settings
@@ -1585,8 +1584,8 @@ massive_sharded_result <- function(x, paths, setup, backend,
     graph$source_identity <- identity
     graph$implementation_identity <-
         massive_checkpoint_implementation_identity()
-    graph$faissr_identity <- if (backend == "cpu")
-        massive_faissr_identity() else NULL
+    graph$native_hnsw_identity <- if (backend == "cpu")
+        massive_native_hnsw_identity() else NULL
     graph$resources <- setup$resources
     graph$build_seconds <- build_seconds
     graph$total_seconds <- unname(proc.time()[[3L]] - started)
@@ -1802,7 +1801,7 @@ massive_full_knn_controls <- function(x, k, backend, method,
 #' Build an experimental file-backed full KNN graph
 #'
 #' Exact search scans all reference blocks for each query block.
-#' `method = "hnsw_sharded"` builds one persistent faissR CPU HNSW index
+#' `method = "hnsw_sharded"` builds one persistent native CPU HNSW index
 #' per reference shard, searches all query blocks against it, and merges
 #' candidates into the file-backed output. It is approximate; its target
 #' recall is not measured unless `audit_rows` is positive. Multiple shard
@@ -1864,8 +1863,9 @@ massive_full_knn_controls <- function(x, k, backend, method,
 #'   shape-based default. A positive value must be at least `k + 1` and
 #'   cannot exceed the smallest reference shard. Other methods reject it.
 #' @param hnsw_build Optional named list with `m` and `ef_construction` for
-#'   an explicitly calibrated CPU HNSW build. `NULL` uses faissR's
-#'   shape-based policy. Other methods and backends reject this setting.
+#'   an explicitly calibrated CPU HNSW build. `NULL` uses the native
+#'   implementation's shape-based policy. Other methods and backends
+#'   reject this setting.
 #' @param devices Optional CUDA device indices. Two or more devices require
 #'   exact or IVF sharded search and a file-backed source. CPU and Metal
 #'   requests fail explicitly; the graph is never moved to another route.

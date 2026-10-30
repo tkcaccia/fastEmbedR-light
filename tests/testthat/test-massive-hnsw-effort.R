@@ -108,7 +108,7 @@ test_that("sharded HNSW tunes for output k, not the self candidate", {
         source, setup, NULL, 0L, NULL, "cpu", NULL),
         "captured index build")
     expect_identical(observed$k, 30L)
-    expect_identical(observed$method, "faiss_hnsw")
+    expect_identical(observed$method, "native_hnsw")
     expect_null(observed$hnsw_build)
 })
 
@@ -125,9 +125,9 @@ test_that("massive CPU graph honors explicit HNSW search effort", {
         backend = "cpu", method = "hnsw_sharded", ef_search = 80L,
         n.cores = 2L, reference_chunk_rows = 80L,
         memory_limit = "256MB", audit_rows = 8L)
-    expect_identical(graph$method, "faissr_cpu_hnsw_sharded")
+    expect_identical(graph$method, "native_cpu_hnsw_sharded")
     expect_equal(graph$target_recall, 0.99)
-    expect_false(graph$spanning_links)
+    expect_true(graph$spanning_links)
     expect_identical(graph$ef_search_requested, 80L)
     expect_true(graph$sample_target_met)
     expect_equal(graph$minimum_row_recall, 1)
@@ -154,7 +154,7 @@ test_that("sharded CPU k30 default retains recall with shared tuning", {
     graph <- massive_full_knn_graph(source, 30L, prefix,
         method = "hnsw_sharded", reference_chunk_rows = 90L,
         memory_limit = "256MB", audit_rows = 8L)
-    expect_identical(graph$method, "faissr_cpu_hnsw_sharded")
+    expect_identical(graph$method, "native_cpu_hnsw_sharded")
     expect_equal(graph$target_recall, 0.99)
     expect_true(graph$sample_target_met)
     small <- massive_full_knn_graph(source, 30L, small_prefix,
