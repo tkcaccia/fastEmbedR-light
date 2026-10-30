@@ -49,13 +49,7 @@ Suggests:
     testthat
 LinkingTo:
     Rcpp (>= 1.0.13)
-SystemRequirements: C++17;
-    Optional acceleration uses either the Apple SDK
-    Metal frameworks on Apple Silicon (macOS 14 or later and Xcode 15 or
-    later), or an NVIDIA CUDA Toolkit. RAPIDS cuVS is needed only for CUDA
-    nearest-neighbor search from matrix inputs. RAPIDS RAFT/RMM is an optional
-    extension, not a core installation requirement. Full-graph multi-GPU
-    Leiden/Louvain additionally require Python RAPIDS cuGraph and Dask-CUDA.
+SystemRequirements: C++17
 VignetteBuilder: knitr
 Roxygen: list(markdown = TRUE)
 Config/roxygen2/version: 7.3.3
