@@ -10,56 +10,67 @@ source attribution and license copies are retained.
 
 ## Source archive
 
-fastEmbedR_0.1.tar.gz is the canonical archive built with R 4.6.2 by GitHub
-Actions from commit 8df0a0801165307fefed242fef3dbc5b4c8fbdc0 on 2026-10-30.
-The same archive is checked on every platform. Its unpacked source was
-compared with the committed package source; no compiled binaries are included.
+The canonical fastEmbedR_0.1.tar.gz was built by GitHub Actions from commit
+49e9a9ba2aa4710685af3d4072f7cea6d57da2e2 on 2026-10-30. All four platform
+checks use this identical archive. Its 234 ordinary package source files
+and DESCRIPTION fields match the checkout; no compiled binaries are included.
 
-## Cross-platform checks
+SHA-256:
 
-The final archive passed R CMD check --as-cran --no-manual with
-0 errors, 0 warnings, and 0 notes on:
+    be38382c7d8f05c5012ae00bbcc19d2bcdb1c1f2019e8315bda774aaf1ba28ad
 
-- Ubuntu Linux, R 4.6.2, GCC 13.3.0.
-- Windows, R 4.6.2 ucrt, GCC 14.3.0.
-- macOS Tahoe, aarch64, R 4.6.2, Apple clang 21.0.0.
-- Ubuntu Linux, R-devel 4.7.0 (2026-10-26 r90766).
+## Cross-platform checks and test budget
+
+R CMD check --as-cran --no-manual completed with 0 errors, 0 warnings,
+and 0 notes on all four platforms. Full testthat timings were:
+
+| Platform | CPU seconds | Elapsed seconds |
+| --- | ---: | ---: |
+| Linux, release R | 70.8 | 77.6 |
+| macOS, release R | 54.4 | 70.6 |
+| Windows, release R | 93.5 | 104.9 |
+| Linux, R-devel | 90.3 | 96.4 |
 
 Check run:
-https://github.com/tkcaccia/fastEmbedR-light/actions/runs/41063442753
+https://github.com/tkcaccia/fastEmbedR-light/actions/runs/41073871045
 
-All source-build and platform-check jobs in this run completed successfully.
-The canonical archive SHA-256 is:
+CI requires both total CPU time (including completed child processes) and
+elapsed time to remain strictly below 180 seconds. The timing gate also
+rejects resource-timing notes. Its regression tests cover missing timing
+records, CPU and elapsed overruns, and timing notes.
 
-    63a9ba1dd78a2d3f0498b3e763c1ed237aadb6c6f0cc15d242437f4e013b3714
+Checks unset external OpenMP controls, set BLAS providers to one thread,
+and set all three R check CPU-to-elapsed timing thresholds to 2.5.
+Tests scope n.cores to one; parallel correctness tests explicitly compare
+one and two workers. An optional test-only BLAS limit restores the previous
+setting on teardown. Production thread defaults remain unchanged.
 
-Only required CPU tooling is declared in SystemRequirements. Optional GPU
-installation requirements are documented in docs/installation.md, so
-automated CPU dependency installation does not request a CUDA toolkit.
+The manuscript, streamed PCA, UMAP worker metadata, and synchronized UMAP
+checkpoint tests run on CRAN. Workloads retain numerical, metadata, error,
+thread-invariance, and checkpoint assertions while using at most two workers.
+GPU/device-specific tests still skip when hardware is unavailable. Windows
+skips the Unix external-command and preserved-time mutation tests.
 
 ## Additional verification
 
-An earlier complete local check on Ubuntu 22.04, R 4.5.2, passed with
-0 errors, 0 warnings, and 2 notes: new submission and inability to verify the
-system clock. It had 2,789 passing assertions and no test failures or warnings.
-The subsequent metadata and portability fixes passed their focused local
-tests and the release-R checks above.
+The identical canonical archive also completed local R CMD check --as-cran
+on Ubuntu 22.04, R 4.5.2, with PDF and HTML manuals and vignette rebuilding:
+0 errors, 0 warnings, and 2 notes (incoming URL/ORCID probes could not
+resolve remote hosts; the environment could not verify the system clock).
+All external OpenMP and BLAS controls were unset. Testthat took 86.8 CPU
+and 96.6 elapsed seconds. No resource-timing notes occurred.
 
-Separate clean sessions exercised CPU HNSW, UMAP, and t-SNE without either
-faissR or the optional float package. Source-style and CUDA configuration
-regression checks passed. The documentation build also passed.
+A fresh local build on Ubuntu 22.04 with R 4.5.2, including vignettes,
+passed full R CMD check --as-cran including PDF and HTML manuals with
+0 errors, 0 warnings, and only the new-submission note. This diagnostic
+archive differs from the canonical CI archive above. With external BLAS
+limits, check tests took 87.9 CPU and 94.3 elapsed seconds; with all external
+OpenMP and BLAS controls unset, 84.7 CPU and 91.0 elapsed seconds.
+A separate full testthat run had 2,816 passing assertions, no failures or
+warnings, and took 99.2 CPU and 109.7 elapsed seconds.
 
-## Optional acceleration and platform-specific tests
-
-Apple Metal and CUDA/cuVS are optional. Unavailable backend requests fail
-explicitly. The CPU build requires only a C++17 compiler and the declared R
-dependencies. Hardware-specific tests are skipped when no suitable device
-is available.
-
-Tests requiring more than two CPU workers and the long manuscript example
-are skipped on CRAN. A Unix external-command test and the preserved-time
-mutation check do not run on Windows. Windows graph modularity uses the
-existing native Windows file mapper; bucketed graph sorting closes readers
-before deleting temporary files.
+Source style, CUDA configure regression checks, and the budget gate tests
+passed. Only C++17 is declared in SystemRequirements; optional GPU tooling
+is documented separately. Unavailable backend requests fail explicitly.
 
 No CRAN submission has been made.
